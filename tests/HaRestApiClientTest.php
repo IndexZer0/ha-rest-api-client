@@ -48,6 +48,7 @@ class HaRestApiClientTest extends TestCase
 
         /** @var Request $request */
         $request = $container[0]['request'];
+
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer $bearerToken", $request->getHeader('Authorization')[0]);
     }
