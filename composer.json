@@ -1,16 +1,16 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "indexzer0/ha-rest-api-client",
+    "description": "Simple client for accessing home assistant rest api.",
     "keywords": [
-        ":vendor_name",
-        ":package_slug"
+        "IndexZer0",
+        "ha-rest-api-client"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/indexzer0/ha-rest-api-client",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "IndexZer0",
+            "email": "24657691+IndexZer0@users.noreply.github.com",
             "role": "Developer"
         }
     ],
@@ -18,28 +18,29 @@
         "php": "^8.1"
     },
     "require-dev": {
-        :require_dev_testing,
-        :require_dev_codestyle,
+        "phpunit/phpunit": "^10.3.2",
+        "laravel/pint": "^1.0",
         "spatie/ray": "^1.28"
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src"
+            "IndexZer0\\HaRestApiClient\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests"
+            "IndexZer0\\HaRestApiClient\\Tests\\": "tests"
         }
     },
     "scripts": {
-        :scripts_testing,
-        :scripts_codestyle
+        "test": "vendor/bin/phpunit",
+            "test-coverage": "vendor/bin/phpunit --coverage",
+        "format": "vendor/bin/pint"
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
-            :plugins_testing,
+            
             "phpstan/extension-installer": true
         }
     },

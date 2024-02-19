@@ -1,6 +1,6 @@
 <?php
 
-namespace VendorName\Skeleton\Tests;
+namespace IndexZer0\HaRestApiClient\Tests;
 
 use PHPUnit\Framework\TestCase;
 
