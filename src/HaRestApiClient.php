@@ -7,6 +7,8 @@ namespace IndexZer0\HaRestApiClient;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
+use JsonException;
+use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
 class HaRestApiClient
@@ -33,40 +35,52 @@ class HaRestApiClient
 
     public function status(): array
     {
-        try {
-            $response = $this->guzzleClient->get('');
-        } catch (Throwable $t) {
-            throw new HaException(previous: $t);
-        }
-
-        return json_decode($response->getBody()->getContents(), true);
+        return $this->handleRequest(function() {
+            return $this->guzzleClient->get('');
+        });
     }
 
     public function config(): array
     {
-        try {
-            $response = $this->guzzleClient->get('config');
-        } catch (Throwable $t) {
-            throw new HaException(previous: $t);
-        }
-
-        return json_decode($response->getBody()->getContents(), true);
+        return $this->handleRequest(function() {
+            return $this->guzzleClient->get('config');
+        });
     }
 
     public function callService(Domain $domain, Service $service, array $data): array
     {
         $url = 'services/' . $domain->value . '/' . $service->value;
 
-        try {
-            $response = $this->guzzleClient->post($url, [
+        return $this->handleRequest(function() use ($url, $data) {
+            return $this->guzzleClient->post($url, [
                 RequestOptions::JSON => $data,
             ]);
+        });
+    }
+
+    /**
+     * ---------------------------------------------------------------------------------
+     * Helpers
+     * ---------------------------------------------------------------------------------
+     */
+
+    private function handleRequest(callable $callable): array
+    {
+        try {
+            /** @var ResponseInterface $response */
+            $response = $callable();
         } catch (ClientException $ce) {
-            throw $ce;
+            throw new HaException($ce->getResponse()->getBody()->getContents(), previous: $ce);
         } catch (Throwable $t) {
-            throw new HaException('Unknown error', previous: $t);
+            throw new HaException('Unknown Error.', previous: $t);
         }
 
-        return json_decode($response->getBody()->getContents(), true);
+        $responseBodyContent = $response->getBody()->getContents();
+
+        try {
+            return json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException $je) {
+            throw new HaException('Invalid JSON Response.', previous: $je);
+        }
     }
 }

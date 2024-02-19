@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient\Tests;
 
 use Generator;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use IndexZer0\HaRestApiClient\Domain;
+use IndexZer0\HaRestApiClient\HaException;
 use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
+use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
 use PHPUnit\Framework\TestCase;
 
 class HaRestApiClientTest extends TestCase
@@ -132,6 +133,47 @@ class HaRestApiClientTest extends TestCase
             ),
             'expected_url' => 'http://foreignhost:8124/api2/',
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function client_handles_unauthorized_response(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+
+        $mock = new MockHandler([
+            GuzzleHelpers::getUnauthorizedResponse()
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken
+        );
+
+        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
+
+        try {
+            $client->status();
+            $this->fail();
+        } catch (HaException $haException) {
+
+        }
+
+        $this->assertCount(1, $container);
+
+        /** @var Request $request */
+        $request = $container[0]['request'];
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri,
+        );
     }
 
     /**
@@ -261,14 +303,15 @@ class HaRestApiClientTest extends TestCase
 
     /**
      * @test
+     * @dataProvider call_service_handles_error_provider
      */
-    public function call_service_handles_error(): void
+    public function call_service_handles_error(Response $response): void
     {
         $container = [];
         $history = Middleware::history($container);
 
         $mock = new MockHandler([
-            new Response(400, body: '400: Bad Request', reason: 'Bad Request'),
+            GuzzleHelpers::getBadRequestResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mock);
@@ -286,7 +329,7 @@ class HaRestApiClientTest extends TestCase
         try {
             $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
             $this->fail();
-        } catch (ClientException $ce) {
+        } catch (HaException $haException) {
 
         }
 
@@ -303,6 +346,19 @@ class HaRestApiClientTest extends TestCase
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services/light/turn_on'
         );
+    }
+
+    public static function call_service_handles_error_provider(): Generator
+    {
+        yield 'bad request' => [
+            'request' => $badRequest = GuzzleHelpers::getBadRequestResponse(),
+            'expected_exception_message' => $badRequest->getBody()->getContents()
+        ];
+
+        yield 'invalid json' => [
+            'haInstanceConfig' => GuzzleHelpers::getInvalidJsonResponse(),
+            'expected_url' => 'Invalid JSON Response.',
+        ];
     }
 
     /**
