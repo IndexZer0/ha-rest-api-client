@@ -79,8 +79,7 @@ class HaRestApiClientTest extends TestCase
     public function client_uses_correct_instance_config(
         HaInstanceConfig $haInstanceConfig,
         string $expectedUrl
-    ): void
-    {
+    ): void {
         $container = [];
         $history = Middleware::history($container);
 
@@ -118,7 +117,7 @@ class HaRestApiClientTest extends TestCase
     {
         yield 'default' => [
             'haInstanceConfig' => new HaInstanceConfig(),
-            'expected_url' => 'http://localhost:8123/api/'
+            'expected_url' => 'http://localhost:8123/api/',
         ];
 
         yield 'different' => [
@@ -127,7 +126,7 @@ class HaRestApiClientTest extends TestCase
                 8124,
                 '/api2/'
             ),
-            'expected_url' => 'http://foreignhost:8124/api2/'
+            'expected_url' => 'http://foreignhost:8124/api2/',
         ];
     }
 
@@ -136,7 +135,6 @@ class HaRestApiClientTest extends TestCase
      * Helpers
      * ---------------------------------------------------------------------------------
      */
-
     private function performCommonGuzzleRequestAssertions(
         Request $request,
         string $bearerToken,
