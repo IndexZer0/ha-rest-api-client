@@ -10,8 +10,10 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use IndexZer0\HaRestApiClient\Domain;
 use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
+use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
 use PHPUnit\Framework\TestCase;
 
@@ -32,7 +34,7 @@ class HaRestApiClientTest extends TestCase
         $history = Middleware::history($container);
 
         $mock = new MockHandler([
-            new Response(200, body: json_encode(['message' => 'API running.'])),
+            new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
         ]);
 
         $handlerStack = HandlerStack::create($mock);
@@ -47,7 +49,7 @@ class HaRestApiClientTest extends TestCase
 
         $status = $client->status();
 
-        $this->assertSame(['message' => 'API running.'], $status);
+        $this->assertSame(Fixtures::getDefaultStatusResponse(), $status);
 
         $this->assertCount(1, $container);
 
@@ -85,7 +87,7 @@ class HaRestApiClientTest extends TestCase
         $history = Middleware::history($container);
 
         $mock = new MockHandler([
-            new Response(200, body: json_encode(['message' => 'API running.'])),
+            new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
         ]);
 
         $handlerStack = HandlerStack::create($mock);
@@ -100,7 +102,7 @@ class HaRestApiClientTest extends TestCase
 
         $status = $client->status();
 
-        $this->assertSame(['message' => 'API running.'], $status);
+        $this->assertSame(Fixtures::getDefaultStatusResponse(), $status);
 
         $this->assertCount(1, $container);
 
@@ -140,7 +142,7 @@ class HaRestApiClientTest extends TestCase
         $history = Middleware::history($container);
 
         $mock = new MockHandler([
-            new Response(200, body: json_encode(['message' => 'API running.'])),
+            new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
         ]);
 
         /*$mock = new MockHandler([
@@ -159,7 +161,7 @@ class HaRestApiClientTest extends TestCase
 
         $status = $client->status();
 
-        $this->assertSame(['message' => 'API running.'], $status);
+        $this->assertSame(Fixtures::getDefaultStatusResponse(), $status);
 
         $this->assertCount(1, $container);
 
@@ -212,6 +214,51 @@ class HaRestApiClientTest extends TestCase
             $request,
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'config'
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function client_can_call_service(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+
+        $mock = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getCallServiceResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken
+        );
+
+        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
+
+        $payload = [
+            'entity_id' => 'light.bedroom_ceiling'
+        ];
+
+        $config = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
+
+        $this->assertSame(Fixtures::getCallServiceResponse(), $config);
+
+        $this->assertCount(1, $container);
+
+        /** @var Request $request */
+        $request = $container[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'services/light/turn_on'
         );
     }
 

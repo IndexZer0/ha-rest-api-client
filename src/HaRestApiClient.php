@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient;
 
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\RequestOptions;
 use Throwable;
 
 class HaRestApiClient
@@ -44,6 +45,21 @@ class HaRestApiClient
     {
         try {
             $response = $this->guzzleClient->get('config');
+        } catch (Throwable $t) {
+            throw new HaException(previous: $t);
+        }
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    public function callService(Domain $domain, Service $service, array $data): array
+    {
+        $url = 'services/' . $domain->value . '/' . $service->value;
+
+        try {
+            $response = $this->guzzleClient->post($url, [
+                RequestOptions::JSON => $data,
+            ]);
         } catch (Throwable $t) {
             throw new HaException(previous: $t);
         }
