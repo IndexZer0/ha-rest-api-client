@@ -305,13 +305,13 @@ class HaRestApiClientTest extends TestCase
      * @test
      * @dataProvider call_service_handles_error_provider
      */
-    public function call_service_handles_error(Response $response): void
+    public function call_service_handles_error(Response $response, string $expectedExceptionMessage): void
     {
         $container = [];
         $history = Middleware::history($container);
 
         $mock = new MockHandler([
-            GuzzleHelpers::getBadRequestResponse()
+            $response
         ]);
 
         $handlerStack = HandlerStack::create($mock);
@@ -330,7 +330,7 @@ class HaRestApiClientTest extends TestCase
             $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
             $this->fail();
         } catch (HaException $haException) {
-
+            $this->assertSame($expectedExceptionMessage, $haException->getMessage());
         }
 
         $this->assertCount(1, $container);
@@ -356,8 +356,8 @@ class HaRestApiClientTest extends TestCase
         ];
 
         yield 'invalid json' => [
-            'haInstanceConfig' => GuzzleHelpers::getInvalidJsonResponse(),
-            'expected_url' => 'Invalid JSON Response.',
+            'request' => GuzzleHelpers::getInvalidJsonResponse(),
+            'expected_exception_message' => 'Invalid JSON Response.',
         ];
     }
 
