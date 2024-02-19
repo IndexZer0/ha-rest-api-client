@@ -4,7 +4,7 @@ namespace IndexZer0\HaRestApiClient\Tests\Fixtures;
 
 class Fixtures
 {
-    public function getDefaultConfigResponse(): array
+    public static function getDefaultConfigResponse(): array
     {
         return [
             "latitude"                => 51.22345398418073,

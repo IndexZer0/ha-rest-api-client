@@ -39,4 +39,15 @@ class HaRestApiClient
 
         return json_decode($response->getBody()->getContents(), true);
     }
+
+    public function config(): array
+    {
+        try {
+            $response = $this->guzzleClient->get('config');
+        } catch (Throwable $t) {
+            throw new HaException(previous: $t);
+        }
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
 }
