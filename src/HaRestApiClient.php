@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace IndexZer0\HaRestApiClient;
@@ -21,10 +22,10 @@ class HaRestApiClient
     {
         $this->guzzleClient = new GuzzleClient([
             'base_uri' => $this->config->getUrL(),
-            'headers'  => [
-                "Authorization" => "Bearer $this->bearerToken",
-                "Content-Type"  => "application/json",
-            ]
+            'headers' => [
+                'Authorization' => "Bearer $this->bearerToken",
+                'Content-Type' => 'application/json',
+            ],
         ]);
     }
 
