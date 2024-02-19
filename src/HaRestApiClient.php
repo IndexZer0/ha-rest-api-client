@@ -35,14 +35,14 @@ class HaRestApiClient
 
     public function status(): array
     {
-        return $this->handleRequest(function() {
+        return $this->handleRequest(function () {
             return $this->guzzleClient->get('');
         });
     }
 
     public function config(): array
     {
-        return $this->handleRequest(function() {
+        return $this->handleRequest(function () {
             return $this->guzzleClient->get('config');
         });
     }
@@ -51,7 +51,7 @@ class HaRestApiClient
     {
         $url = 'services/' . $domain->value . '/' . $service->value;
 
-        return $this->handleRequest(function() use ($url, $data) {
+        return $this->handleRequest(function () use ($url, $data) {
             return $this->guzzleClient->post($url, [
                 RequestOptions::JSON => $data,
             ]);
