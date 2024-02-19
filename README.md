@@ -5,15 +5,7 @@
 [![codecov](https://codecov.io/gh/IndexZer0/ha-rest-api-client/graph/badge.svg?token=JMF8UG8S4Y)](https://codecov.io/gh/IndexZer0/ha-rest-api-client)
 [![Total Downloads](https://img.shields.io/packagist/dt/indexzer0/ha-rest-api-client.svg?style=flat-square)](https://packagist.org/packages/indexzer0/ha-rest-api-client)
 
-This is where your description should go. Try and limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/ha-rest-api-client.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/ha-rest-api-client)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+Simple client wrapper around GuzzleHttp for accessing HomeAssistant Rest API.
 
 ## Installation
 
@@ -26,8 +18,8 @@ composer require indexzer0/ha-rest-api-client
 ## Usage
 
 ```php
-$skeleton = new IndexZer0\HaRestApiClient();
-echo $skeleton->echoPhrase('Hello, IndexZer0!');
+$client = new \IndexZer0\HaRestApiClient();
+echo $client->status()['message'];
 ```
 
 ## Testing
