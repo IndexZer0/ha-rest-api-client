@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient;
 
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\RequestOptions;
 use Throwable;
 
@@ -60,8 +61,10 @@ class HaRestApiClient
             $response = $this->guzzleClient->post($url, [
                 RequestOptions::JSON => $data,
             ]);
+        } catch (ClientException $ce) {
+            throw $ce;
         } catch (Throwable $t) {
-            throw new HaException(previous: $t);
+            throw new HaException('Unknown error', previous: $t);
         }
 
         return json_decode($response->getBody()->getContents(), true);

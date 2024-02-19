@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient\Tests;
 
 use Generator;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -145,10 +146,6 @@ class HaRestApiClientTest extends TestCase
             new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
         ]);
 
-        /*$mock = new MockHandler([
-            new Response(404, body: '404: Not Founddsssd', reason: 'Not Found'),
-        ]);*/
-
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
@@ -243,9 +240,55 @@ class HaRestApiClientTest extends TestCase
             'entity_id' => 'light.bedroom_ceiling'
         ];
 
-        $config = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
+        $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
 
-        $this->assertSame(Fixtures::getCallServiceResponse(), $config);
+        $this->assertSame(Fixtures::getCallServiceResponse(), $response);
+
+        $this->assertCount(1, $container);
+
+        /** @var Request $request */
+        $request = $container[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'services/light/turn_on'
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function call_service_handles_error(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+
+        $mock = new MockHandler([
+            new Response(400, body: '400: Bad Request', reason: 'Bad Request'),
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken
+        );
+
+        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
+
+        $payload = [];
+
+        try {
+            $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
+            $this->fail();
+        } catch (ClientException $ce) {
+
+        }
 
         $this->assertCount(1, $container);
 
@@ -272,9 +315,12 @@ class HaRestApiClientTest extends TestCase
         string $bearerToken,
         string $url
     ) {
-        // Auth
+        // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);
+        // Headers - Content-Type
+        $this->assertTrue($request->hasHeader('Content-Type'));
+        $this->assertSame("application/json", $request->getHeader('Content-Type')[0]);
 
         // Uri
         $this->assertSame($url, $request->getUri()->__toString());
