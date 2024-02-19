@@ -6,6 +6,7 @@ namespace IndexZer0\HaRestApiClient;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
 use JsonException;
 use Psr\Http\Message\ResponseInterface;
@@ -17,12 +18,13 @@ class HaRestApiClient
 
     public function __construct(
         private HaInstanceConfig $config,
-        private string $bearerToken
+        private string $bearerToken,
+        private ?HandlerStack $handlerStack = null
     ) {
         $this->initGuzzleClient();
     }
 
-    private function initGuzzleClient(): void
+    protected function initGuzzleClient(): void
     {
         $this->guzzleClient = new GuzzleClient([
             'base_uri' => $this->config->getUrL(),
@@ -30,6 +32,7 @@ class HaRestApiClient
                 'Authorization' => "Bearer {$this->bearerToken}",
                 'Content-Type' => 'application/json',
             ],
+            'handler' => $this->handlerStack
         ]);
     }
 

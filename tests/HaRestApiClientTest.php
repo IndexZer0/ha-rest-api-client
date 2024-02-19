@@ -44,10 +44,9 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            $bearerToken
+            $bearerToken,
+            $handlerStack
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         $status = $client->status();
 
@@ -98,9 +97,8 @@ class HaRestApiClientTest extends TestCase
         $client = new HaRestApiClient(
             $haInstanceConfig,
             $this->defaultBearerToken,
+            $handlerStack
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         $status = $client->status();
 
@@ -152,10 +150,9 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            $this->defaultBearerToken
+            $this->defaultBearerToken,
+            $handlerStack
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         try {
             $client->status();
@@ -193,10 +190,9 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            'bearerToken'
+            'bearerToken',
+            $handlerStack
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         $status = $client->status();
 
@@ -233,10 +229,9 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            $this->defaultBearerToken
+            $this->defaultBearerToken,
+            $handlerStack
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         $config = $client->config();
 
@@ -273,10 +268,9 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            $this->defaultBearerToken
+            $this->defaultBearerToken,
+            $handlerStack,
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         $payload = [
             'entity_id' => 'light.bedroom_ceiling'
@@ -319,10 +313,9 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            $this->defaultBearerToken
+            $this->defaultBearerToken,
+            $handlerStack
         );
-
-        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
 
         $payload = [];
 
