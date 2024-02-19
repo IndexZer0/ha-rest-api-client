@@ -48,4 +48,9 @@ class GuzzleHelpers
     {
         return new Response(200, body: 'invalid json');
     }
+
+    public static function getNullJsonResponse(): Response
+    {
+        return new Response(200, body: 'null');
+    }
 }

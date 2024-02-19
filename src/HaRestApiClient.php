@@ -81,7 +81,11 @@ class HaRestApiClient
         $responseBodyContent = $response->getBody()->getContents();
 
         try {
-            return json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
+            $json = json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
+            if (!is_array($json)) {
+                return [$json];
+            }
+            return $json;
         } catch (JsonException $je) {
             throw new HaException('Invalid JSON Response.', previous: $je);
         }

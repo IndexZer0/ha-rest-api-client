@@ -355,6 +355,28 @@ class HaRestApiClientTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function client_wraps_response_in_array_if_needed(): void
+    {
+        $mock = new MockHandler([
+            GuzzleHelpers::getNullJsonResponse()
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken,
+            $handlerStack
+        );
+
+        $response = $client->status();
+
+        $this->assertSame([null], $response);
+    }
+
+    /**
      * ---------------------------------------------------------------------------------
      * Helpers
      * ---------------------------------------------------------------------------------
