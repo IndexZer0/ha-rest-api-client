@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace IndexZer0\HaRestApiClient\Tests;
@@ -11,13 +12,13 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
-
 use PHPUnit\Framework\TestCase;
 
 class HaRestApiClientTest extends TestCase
 {
     /**
      * @test
+     *
      * @dataProvider client_sends_bearer_token_provider
      */
     public function client_sends_bearer_token($bearerToken): void
@@ -54,11 +55,11 @@ class HaRestApiClientTest extends TestCase
     public function client_sends_bearer_token_provider(): Generator
     {
         yield 'bearer-1' => [
-            'bearerToken' => 'bearer-1'
+            'bearerToken' => 'bearer-1',
         ];
 
         yield 'bearer-2' => [
-            'bearerToken' => 'bearer-2'
+            'bearerToken' => 'bearer-2',
         ];
     }
 }
