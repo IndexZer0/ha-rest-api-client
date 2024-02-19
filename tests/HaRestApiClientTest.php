@@ -51,7 +51,7 @@ class HaRestApiClientTest extends TestCase
         $this->assertSame("Bearer $bearerToken", $request->getHeader('Authorization')[0]);
     }
 
-    public function client_sends_bearer_token_provider(): Generator
+    public static function client_sends_bearer_token_provider(): Generator
     {
         yield 'bearer-1' => [
             'bearerToken' => 'bearer-1'
