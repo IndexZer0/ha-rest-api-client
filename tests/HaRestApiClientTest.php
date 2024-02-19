@@ -131,6 +131,50 @@ class HaRestApiClientTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function client_can_get_status(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+
+        $mock = new MockHandler([
+            new Response(200, body: json_encode(['message' => 'API running.'])),
+        ]);
+
+        /*$mock = new MockHandler([
+            new Response(404, body: '404: Not Founddsssd', reason: 'Not Found'),
+        ]);*/
+
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            'bearerToken'
+        );
+
+        $client->guzzleClient->getConfig('handler')->setHandler($handlerStack);
+
+        $status = $client->status();
+
+        $this->assertSame(['message' => 'API running.'], $status);
+
+        $this->assertCount(1, $container);
+
+        /** @var Request $request */
+        $request = $container[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri
+        );
+    }
+
+    /**
      * ---------------------------------------------------------------------------------
      * Helpers
      * ---------------------------------------------------------------------------------
