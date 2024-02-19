@@ -15,6 +15,6 @@ class HaInstanceConfig
 
     public function getUrL(): string
     {
-        return 'http://'.$this->host.':'.$this->port.$this->endpoint;
+        return 'http://' . $this->host . ':' . $this->port . $this->endpoint;
     }
 }

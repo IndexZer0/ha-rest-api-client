@@ -227,7 +227,7 @@ class HaRestApiClientTest extends TestCase
     ) {
         // Auth
         $this->assertTrue($request->hasHeader('Authorization'));
-        $this->assertSame("Bearer $bearerToken", $request->getHeader('Authorization')[0]);
+        $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);
 
         // Uri
         $this->assertSame($url, $request->getUri()->__toString());

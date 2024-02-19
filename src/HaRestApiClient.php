@@ -23,7 +23,7 @@ class HaRestApiClient
         $this->guzzleClient = new GuzzleClient([
             'base_uri' => $this->config->getUrL(),
             'headers' => [
-                'Authorization' => "Bearer $this->bearerToken",
+                'Authorization' => "Bearer {$this->bearerToken}",
                 'Content-Type' => 'application/json',
             ],
         ]);
