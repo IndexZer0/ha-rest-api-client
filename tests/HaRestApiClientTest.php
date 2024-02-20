@@ -781,6 +781,11 @@ class HaRestApiClientTest extends TestCase
             'response'                   => GuzzleHelpers::getInvalidJsonResponse(),
             'expected_exception_message' => 'Invalid JSON Response.',
         ];
+
+        yield 'server error' => [
+            'response'                   => GuzzleHelpers::getServerErrorResponse(),
+            'expected_exception_message' => 'Unknown Error.'
+        ];
     }
 
     #[Test]

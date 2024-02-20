@@ -57,4 +57,9 @@ class GuzzleHelpers
     {
         return new Response(200, body: 'null');
     }
+
+    public static function getServerErrorResponse(): Response
+    {
+        return new Response(500, body: 'Server error');
+    }
 }
