@@ -23,6 +23,8 @@ use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CheckConfig\CheckConfig;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStart;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStop;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventScriptStarted;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\HandleIntent\HandleIntentFailServerError;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\HandleIntent\HandleIntentSuccess;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\RenderTemplate\RenderTemplateFailBadRequest;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\RenderTemplate\RenderTemplateSuccess;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\ResponseDefinition;
@@ -1126,6 +1128,86 @@ class HaRestApiClientTest extends TestCase
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'config/core/check_config'
         );
+    }
+
+    #[Test]
+    #[DataProvider('client_can_handle_intent_provider')]
+    public function client_can_handle_intent(
+        ResponseDefinition $response_definition,
+        bool               $expect_error,
+        ?string            $expected_error_message = null,
+    ): void {
+        // Setup Handler stack.
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            $response_definition->getResponse(),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        // Create client.
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        // Call method.
+        try {
+            $payload = [
+                'name' => 'SetTimer',
+                'data' => [
+                    'seconds' => '30',
+                ]
+            ];
+
+            $handleIntent = $client->handleIntent($payload);
+            if ($expect_error) {
+                $this->fail('Should have failed.');
+            }
+
+            // Assert client returns correct data.
+            $this->assertSame($response_definition->getBodyAsArray(), $handleIntent);
+
+        } catch (HaException $haException) {
+            if (!$expect_error) {
+                $this->fail('Should not have failed.');
+            }
+            $this->assertSame($expected_error_message, $haException->getMessage());
+        }
+
+        // Assert request sent correctly.
+        $this->assertCount(1, $historyContainer);
+
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'intent/handle'
+        );
+    }
+
+    public static function client_can_handle_intent_provider(): Generator
+    {
+        yield 'success' => [
+            'response_definition'    => new HandleIntentSuccess(),
+            'expect_error'           => false,
+            'expected_error_message' => null,
+        ];
+
+        yield 'failure - bad request' => [
+            'response_definition'    => $serverError = new HandleIntentFailServerError(),
+            'expect_error'           => true,
+            'expected_error_message' => 'Unknown Error.',
+        ];
     }
 
     #[Test]

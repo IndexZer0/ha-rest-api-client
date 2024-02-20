@@ -259,15 +259,14 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function handleIntent(array $data): array
+    public function handleIntent(array $data): array
     {
         return $this->handleRequest(function () use ($data) {
             return $this->guzzleClient->post('intent/handle', [
                  RequestOptions::JSON => $data,
             ]);
         });
-    }*/
+    }
 
     /**
      * ---------------------------------------------------------------------------------
