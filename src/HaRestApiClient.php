@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IndexZer0\HaRestApiClient;
 
+use DateTimeInterface;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\HandlerStack;
@@ -17,7 +18,7 @@ class HaRestApiClient
     public readonly GuzzleClient $guzzleClient;
 
     public function __construct(
-        private HaInstanceConfig $config,
+        private HaInstanceConfig $config = new HaInstanceConfig(),
         private string $bearerToken,
         private ?HandlerStack $handlerStack = null
     ) {
@@ -50,6 +51,171 @@ class HaRestApiClient
         });
     }
 
+    public function events(): array
+    {
+        return $this->handleRequest(function () {
+            return $this->guzzleClient->get('events');
+        });
+    }
+
+    public function services(): array
+    {
+        return $this->handleRequest(function () {
+            return $this->guzzleClient->get("services");
+        });
+    }
+
+    public function history(
+        ?DateTimeInterface $startTime = null,
+        array $entityIds,
+        ?DateTimeInterface $endTime = null,
+        bool $minimalResponse = false,
+        bool $noAttributes = false,
+        bool $significantChangesOnly = false,
+    ): array
+    {
+        if (count($entityIds) < 1) {
+            throw new HaException('Provide at least one entity id.');
+        }
+
+        foreach ($entityIds as $entityId) {
+            if (!is_string($entityId)) {
+                throw new HaException('Entity id must be string.');
+            }
+        }
+
+        $path = "history/period";
+
+        $dateFormat = 'Y-m-d\Th:m:sP';
+
+        if ($startTime !== null ) {
+            $path .= '/' . $startTime->format($dateFormat);
+        }
+
+        $booleanQueryParams = array_filter([
+            'minimal_response'         => $minimalResponse,
+            'no_attributes'            => $noAttributes,
+            'significant_changes_only' => $significantChangesOnly,
+        ], function($value) {
+            return $value === true;
+        });
+
+        $queryParams = [
+            'filter_entity_id' => join(',', $entityIds),
+            ...$booleanQueryParams
+        ];
+
+        if ($endTime !== null) {
+            $queryParams['end_time'] = $endTime->format($dateFormat);
+        }
+
+        return $this->handleRequest(function () use ($path, $queryParams) {
+            return $this->guzzleClient->get($path, [
+                'query' => $queryParams
+            ]);
+        });
+    }
+
+    // TODO
+    /*public function logbook(?DateTimeInterface $periodBeginning = null): array
+    {
+        // TODO get params.
+
+        $path = "logbook/";
+
+        if ($periodBeginning !== null ) {
+            $path .= $periodBeginning->format('YYYY-MM-DDThh:mm:ssTZD');
+        }
+
+        return $this->handleRequest(function () use ($path) {
+            return $this->guzzleClient->get($path);
+        });
+    }*/
+
+    // TODO
+    /*public function states(): array
+    {
+        return $this->handleRequest(function () {
+            return $this->guzzleClient->get('states');
+        });
+    }*/
+
+    // TODO
+    /*public function state(string $entityId): array
+    {
+        return $this->handleRequest(function () use ($entityId) {
+            return $this->guzzleClient->get("states/{$entityId}");
+        });
+    }*/
+
+    // TODO
+    /*public function errorLog(): array
+    {
+        return $this->handleRequest(function () {
+            return $this->guzzleClient->get('error_log');
+        });
+    }*/
+
+    // TODO
+    /*public function camera(string $entityId): array
+    {
+        // TODO get param (time).
+
+        return $this->handleRequest(function () use ($entityId) {
+            return $this->guzzleClient->get("camera_proxy/{$entityId}");
+        });
+    }*/
+
+    // TODO
+    /*public function calendars(): array
+    {
+        return $this->handleRequest(function () {
+            return $this->guzzleClient->get('calendars');
+        });
+    }*/
+
+    // TODO
+    /*public function calendarEvents(string $entityId): array
+    {
+        // TODO get params.
+
+        return $this->handleRequest(function () use ($entityId) {
+            return $this->guzzleClient->get("calendars/{$entityId}");
+        });
+    }*/
+
+    // TODO
+    /*public function updateState(
+        string $entityId,
+        string $state,
+        ?array $attributes
+    ): array {
+
+        $data = ['state' => $state,];
+
+        if ($attributes !== null) {
+            $data['attributes'] = $attributes;
+        }
+
+        return $this->handleRequest(function () use ($entityId, $data) {
+            return $this->guzzleClient->post("states/{$entityId}", [
+                RequestOptions::JSON => $data,
+            ]);
+        });
+    }*/
+
+    // TODO
+    /*public function fireEvent(
+        string $eventType,
+        ?array $eventData
+    ): array {
+        return $this->handleRequest(function () use ($eventType, $eventData) {
+            return $this->guzzleClient->post("events/{$eventType}", [
+                RequestOptions::JSON => $eventData,
+            ]);
+        });
+    }*/
+
     public function callService(Domain $domain, Service $service, array $data): array
     {
         $url = 'services/' . $domain->value . '/' . $service->value;
@@ -60,6 +226,34 @@ class HaRestApiClient
             ]);
         });
     }
+
+    // TODO
+    /*public function renderTemplate(string $template): array
+    {
+        return $this->handleRequest(function () use ($template) {
+            return $this->guzzleClient->post('template', [
+                RequestOptions::JSON => ['template' => $template],
+            ]);
+        });
+    }*/
+
+    // TODO
+    /*public function checkConfig(): array
+    {
+        return $this->handleRequest(function () {
+            return $this->guzzleClient->post('config/core/check_config');
+        });
+    }*/
+
+    // TODO
+    /*public function handleIntent(array $data): array
+    {
+        return $this->handleRequest(function () use ($data) {
+            return $this->guzzleClient->post('intent/handle', [
+                 RequestOptions::JSON => $data,
+            ]);
+        });
+    }*/
 
     /**
      * ---------------------------------------------------------------------------------
