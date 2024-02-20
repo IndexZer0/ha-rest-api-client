@@ -719,6 +719,45 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
+    public function client_can_get_calendar_events(): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getCalendarEventsResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        $calendarEvents = $client->calendarEvents(
+            'calendar.birthdays',
+            new DateTime('2024-02-10 00:00:00'),
+            new DateTime('2024-02-20 23:59:59'),
+        );
+
+        $this->assertCount(1, $historyContainer);
+        $this->assertSame(Fixtures::getCalendarEventsResponse(), $calendarEvents);
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'calendars/calendar.birthdays?start=2024-02-10T12%3A02%3A00%2B00%3A00&end=2024-02-20T11%3A02%3A59%2B00%3A00'
+        );
+    }
+
+    #[Test]
     public function client_can_call_service(): void
     {
         $historyContainer = [];

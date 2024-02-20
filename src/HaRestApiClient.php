@@ -18,10 +18,11 @@ class HaRestApiClient
     public readonly GuzzleClient $guzzleClient;
 
     public function __construct(
-        private string $bearerToken,
+        private string           $bearerToken,
         private HaInstanceConfig $config = new HaInstanceConfig(),
-        private ?HandlerStack $handlerStack = null
-    ) {
+        private ?HandlerStack    $handlerStack = null
+    )
+    {
         $this->initGuzzleClient();
     }
 
@@ -29,11 +30,11 @@ class HaRestApiClient
     {
         $this->guzzleClient = new GuzzleClient([
             'base_uri' => $this->config->getUrL(),
-            'headers' => [
+            'headers'  => [
                 'Authorization' => "Bearer {$this->bearerToken}",
-                'Content-Type' => 'application/json',
+                'Content-Type'  => 'application/json',
             ],
-            'handler' => $this->handlerStack
+            'handler'  => $this->handlerStack
         ]);
     }
 
@@ -66,13 +67,14 @@ class HaRestApiClient
     }
 
     public function history(
-        array $entityIds,
+        array              $entityIds,
         ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
-        bool $minimalResponse = false,
-        bool $noAttributes = false,
-        bool $significantChangesOnly = false,
-    ): array {
+        bool               $minimalResponse = false,
+        bool               $noAttributes = false,
+        bool               $significantChangesOnly = false,
+    ): array
+    {
         if (count($entityIds) < 1) {
             throw new HaException('Provide at least one entity id.');
         }
@@ -116,10 +118,11 @@ class HaRestApiClient
     }
 
     public function logbook(
-        ?string $entityId = null,
+        ?string            $entityId = null,
         ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
-    ): array {
+    ): array
+    {
         $path = "logbook";
 
         $dateFormat = 'Y-m-d\Th:m:sP';
@@ -183,15 +186,25 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function calendarEvents(string $entityId): array
+    public function calendarEvents(
+        string            $entityId,
+        DateTimeInterface $start,
+        DateTimeInterface $end,
+    ): array
     {
-        // TODO get params.
+        $dateFormat = 'Y-m-d\Th:m:sP';
 
-        return $this->handleRequest(function () use ($entityId) {
-            return $this->guzzleClient->get("calendars/{$entityId}");
+        $queryParams = [
+            'start' => $start->format($dateFormat),
+            'end'   => $end->format($dateFormat)
+        ];
+
+        return $this->handleRequest(function () use ($entityId, $queryParams) {
+            return $this->guzzleClient->get("calendars/{$entityId}", [
+                'query' => $queryParams
+            ]);
         });
-    }*/
+    }
 
     // TODO
     /*public function updateState(
