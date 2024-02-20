@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace IndexZer0\HaRestApiClient\Tests;
 
+use DateTime;
+use DateTimeInterface;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Generator;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -25,12 +29,9 @@ class HaRestApiClientTest extends TestCase
 
     private string $defaultBaseUri = 'http://localhost:8123/api/';
 
-    /**
-     * @test
-     *
-     * @dataProvider client_sends_bearer_token_provider
-     */
-    public function client_sends_bearer_token($bearerToken): void
+    #[Test]
+    #[DataProvider('client_sends_bearer_token_provider')]
+    public function client_sends_bearer_token(string $bearer_token): void
     {
         $container = [];
         $history = Middleware::history($container);
@@ -44,7 +45,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             new HaInstanceConfig(),
-            $bearerToken,
+            $bearer_token,
             $handlerStack
         );
 
@@ -59,7 +60,7 @@ class HaRestApiClientTest extends TestCase
 
         $this->performCommonGuzzleRequestAssertions(
             $request,
-            $bearerToken,
+            $bearer_token,
             $this->defaultBaseUri,
         );
     }
@@ -67,23 +68,21 @@ class HaRestApiClientTest extends TestCase
     public static function client_sends_bearer_token_provider(): Generator
     {
         yield 'bearer-1' => [
-            'bearerToken' => 'bearer-1',
+            'bearer_token' => 'bearer-1',
         ];
 
         yield 'bearer-2' => [
-            'bearerToken' => 'bearer-2',
+            'bearer_token' => 'bearer-2',
         ];
     }
 
-    /**
-     * @test
-     *
-     * @dataProvider client_uses_correct_instance_config_provider
-     */
+    #[Test]
+    #[DataProvider('client_uses_correct_instance_config_provider')]
     public function client_uses_correct_instance_config(
-        HaInstanceConfig $haInstanceConfig,
-        string $expectedUrl
-    ): void {
+        HaInstanceConfig $ha_instance_config,
+        string           $expected_url
+    ): void
+    {
         $container = [];
         $history = Middleware::history($container);
 
@@ -95,7 +94,7 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            $haInstanceConfig,
+            $ha_instance_config,
             $this->defaultBearerToken,
             $handlerStack
         );
@@ -112,30 +111,28 @@ class HaRestApiClientTest extends TestCase
         $this->performCommonGuzzleRequestAssertions(
             $request,
             $this->defaultBearerToken,
-            $expectedUrl
+            $expected_url
         );
     }
 
     public static function client_uses_correct_instance_config_provider(): Generator
     {
         yield 'default' => [
-            'haInstanceConfig' => new HaInstanceConfig(),
-            'expected_url' => 'http://localhost:8123/api/',
+            'ha_instance_config' => new HaInstanceConfig(),
+            'expected_url'       => 'http://localhost:8123/api/',
         ];
 
         yield 'different' => [
-            'haInstanceConfig' => new HaInstanceConfig(
+            'ha_instance_config' => new HaInstanceConfig(
                 'foreignhost',
                 8124,
                 '/api2/'
             ),
-            'expected_url' => 'http://foreignhost:8124/api2/',
+            'expected_url'       => 'http://foreignhost:8124/api2/',
         ];
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function client_handles_unauthorized_response(): void
     {
         $container = [];
@@ -173,9 +170,7 @@ class HaRestApiClientTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function client_can_get_status(): void
     {
         $container = [];
@@ -212,9 +207,7 @@ class HaRestApiClientTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function client_can_get_config(): void
     {
         $container = [];
@@ -251,9 +244,230 @@ class HaRestApiClientTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     */
+    #[Test]
+    public function client_can_get_events(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+
+        $mock = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getEventsResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken,
+            $handlerStack
+        );
+
+        $events = $client->events();
+
+        $this->assertSame(Fixtures::getEventsResponse(), $events);
+
+        $this->assertCount(1, $container);
+
+        /** @var Request $request */
+        $request = $container[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'events'
+        );
+    }
+
+    #[Test]
+    public function client_can_get_services(): void
+    {
+        $container = [];
+        $history = Middleware::history($container);
+
+        $mock = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getServicesResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push($history);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken,
+            $handlerStack
+        );
+
+        $services = $client->services();
+
+        $this->assertSame(Fixtures::getServicesResponse(), $services);
+
+        $this->assertCount(1, $container);
+
+        /** @var Request $request */
+        $request = $container[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'services'
+        );
+    }
+
+    #[Test]
+    #[DataProvider('client_can_get_history_provider')]
+    public function client_can_get_history(
+        array              $entity_ids,
+        bool               $minimal_response,
+        bool               $no_attributes,
+        bool               $significant_changes_only,
+        bool               $expect_error,
+        ?string            $expected_error_message,
+        bool               $expect_request_sent,
+        ?string            $expected_url,
+        ?DateTimeInterface $start_time,
+        ?DateTimeInterface $end_time = null,
+    ): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandler = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getHistoryResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandler);
+        $handlerStack->push($historyMiddleware);
+
+        $client = new HaRestApiClient(
+            new HaInstanceConfig(),
+            $this->defaultBearerToken,
+            $handlerStack
+        );
+
+        try {
+            $history = $client->history(
+                $start_time,
+                $entity_ids,
+                $end_time,
+                $minimal_response,
+                $no_attributes,
+                $significant_changes_only
+            );
+            if ($expect_error) {
+                $this->fail('Should have failed.');
+            }
+        } catch (HaException $haException) {
+            if (!$expect_error) {
+                $this->fail('Should not have failed.');
+            }
+            $this->assertSame($expected_error_message, $haException->getMessage());
+        }
+
+        if ($expect_request_sent) {
+            $this->assertCount(1, $historyContainer);
+            $this->assertSame(Fixtures::getHistoryResponse(), $history);
+            /** @var Request $request */
+            $request = $historyContainer[0]['request'];
+
+            $this->assertSame('GET', $request->getMethod());
+
+            $this->performCommonGuzzleRequestAssertions(
+                $request,
+                $this->defaultBearerToken,
+                $this->defaultBaseUri . $expected_url
+            );
+        } else {
+            $this->assertCount(0, $historyContainer);
+        }
+    }
+
+    public static function client_can_get_history_provider(): Generator
+    {
+        yield 'no entity ids' => [
+            'start_time'               => null,
+            'entity_ids'               => [],
+            'end_time'                 => null,
+            'minimal_response'         => false,
+            'no_attributes'            => false,
+            'significant_changes_only' => false,
+            'expect_error'             => true,
+            'expected_error_message'   => 'Provide at least one entity id.',
+            'expect_request_sent'      => false,
+            'expected_url'             => null,
+        ];
+
+        yield 'invalid entity id type' => [
+            'start_time'               => null,
+            'entity_ids'               => [1],
+            'end_time'                 => null,
+            'minimal_response'         => false,
+            'no_attributes'            => false,
+            'significant_changes_only' => false,
+            'expect_error'             => true,
+            'expected_error_message'   => 'Entity id must be string.',
+            'expect_request_sent'      => false,
+            'expected_url'             => null,
+        ];
+
+        yield 'no start_time & valid entity id' => [
+            'start_time'               => null,
+            'entity_ids'               => ['light.bedroom_ceiling'],
+            'end_time'                 => null,
+            'minimal_response'         => false,
+            'no_attributes'            => false,
+            'significant_changes_only' => false,
+            'expect_error'             => false,
+            'expected_error_message'   => null,
+            'expect_request_sent'      => true,
+            'expected_url'             => 'history/period?filter_entity_id=light.bedroom_ceiling',
+        ];
+
+        yield 'start_time & valid entity id' => [
+            'start_time'               => new DateTime('2024-02-19 11:02:54'),
+            'entity_ids'               => ['light.bedroom_ceiling'],
+            'end_time'                 => null,
+            'minimal_response'         => false,
+            'no_attributes'            => false,
+            'significant_changes_only' => false,
+            'expect_error'             => false,
+            'expected_error_message'   => null,
+            'expect_request_sent'      => true,
+            'expected_url'             => 'history/period/2024-02-19T11:02:54+00:00?filter_entity_id=light.bedroom_ceiling',
+        ];
+
+        yield 'with partial query string' => [
+            'start_time'               => new DateTime('2024-02-19 11:02:54'),
+            'entity_ids'               => ['light.bedroom_ceiling'],
+            'end_time'                 => new DateTime('2024-02-19 11:02:54'),
+            'minimal_response'         => true,
+            'no_attributes'            => false,
+            'significant_changes_only' => false,
+            'expect_error'             => false,
+            'expected_error_message'   => null,
+            'expect_request_sent'      => true,
+            'expected_url'             => 'history/period/2024-02-19T11:02:54+00:00?filter_entity_id=light.bedroom_ceiling&minimal_response=1&end_time=2024-02-19T11%3A02%3A54%2B00%3A00',
+        ];
+
+        yield 'with full query string' => [
+            'start_time'               => new DateTime('2024-02-19 11:02:54'),
+            'entity_ids'               => ['light.bedroom_ceiling'],
+            'end_time'                 => new DateTime('2024-02-19 11:02:54'),
+            'minimal_response'         => true,
+            'no_attributes'            => true,
+            'significant_changes_only' => true,
+            'expect_error'             => false,
+            'expected_error_message'   => null,
+            'expect_request_sent'      => true,
+            'expected_url'             => 'history/period/2024-02-19T11:02:54+00:00?filter_entity_id=light.bedroom_ceiling&minimal_response=1&no_attributes=1&significant_changes_only=1&end_time=2024-02-19T11%3A02%3A54%2B00%3A00',
+        ];
+    }
+
+    #[Test]
     public function client_can_call_service(): void
     {
         $container = [];
@@ -295,11 +509,9 @@ class HaRestApiClientTest extends TestCase
         );
     }
 
-    /**
-     * @test
-     * @dataProvider call_service_handles_error_provider
-     */
-    public function call_service_handles_error(Response $response, string $expectedExceptionMessage): void
+    #[Test]
+    #[DataProvider('call_service_handles_error_provider')]
+    public function call_service_handles_error(Response $response, string $expected_exception_message): void
     {
         $container = [];
         $history = Middleware::history($container);
@@ -323,7 +535,7 @@ class HaRestApiClientTest extends TestCase
             $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
             $this->fail();
         } catch (HaException $haException) {
-            $this->assertSame($expectedExceptionMessage, $haException->getMessage());
+            $this->assertSame($expected_exception_message, $haException->getMessage());
         }
 
         $this->assertCount(1, $container);
@@ -344,19 +556,17 @@ class HaRestApiClientTest extends TestCase
     public static function call_service_handles_error_provider(): Generator
     {
         yield 'bad request' => [
-            'request' => $badRequest = GuzzleHelpers::getBadRequestResponse(),
+            'response'                   => $badRequest = GuzzleHelpers::getBadRequestResponse(),
             'expected_exception_message' => $badRequest->getBody()->getContents()
         ];
 
         yield 'invalid json' => [
-            'request' => GuzzleHelpers::getInvalidJsonResponse(),
+            'response'                   => GuzzleHelpers::getInvalidJsonResponse(),
             'expected_exception_message' => 'Invalid JSON Response.',
         ];
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function client_wraps_response_in_array_if_needed(): void
     {
         $mock = new MockHandler([
@@ -383,9 +593,10 @@ class HaRestApiClientTest extends TestCase
      */
     private function performCommonGuzzleRequestAssertions(
         Request $request,
-        string $bearerToken,
-        string $url
-    ) {
+        string  $bearerToken,
+        string  $url
+    )
+    {
         // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);
