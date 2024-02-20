@@ -17,9 +17,20 @@ use IndexZer0\HaRestApiClient\HaException;
 use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Service;
-use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CalendarEvents\CalendarEvents;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Calendars\Calendars;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CallService\CallService;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CheckConfig\CheckConfig;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Config\Config;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\ErrorLog\ErrorLog;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Events\Events;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\History\History;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Logbook\Logbook;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Services\Services;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\State\State;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\State\StateEntityNotFound;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\States\States;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Status\Status;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStart;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStop;
@@ -95,7 +106,8 @@ class HaRestApiClientTest extends TestCase
     public function client_uses_correct_instance_config(
         HaInstanceConfig $ha_instance_config,
         string           $expected_url
-    ): void {
+    ): void
+    {
         $responseDefinition = new Status();
 
         $historyContainer = [];
@@ -227,11 +239,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_config(): void
     {
+        $responseDefinition = new Config();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getDefaultConfigResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -245,7 +259,7 @@ class HaRestApiClientTest extends TestCase
 
         $config = $client->config();
 
-        $this->assertSame(Fixtures::getDefaultConfigResponse(), $config);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $config);
 
         $this->assertCount(1, $historyContainer);
 
@@ -264,11 +278,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_events(): void
     {
+        $responseDefinition = new Events();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getEventsResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -282,7 +298,7 @@ class HaRestApiClientTest extends TestCase
 
         $events = $client->events();
 
-        $this->assertSame(Fixtures::getEventsResponse(), $events);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $events);
 
         $this->assertCount(1, $historyContainer);
 
@@ -301,11 +317,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_services(): void
     {
+        $responseDefinition = new Services();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getServicesResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -319,7 +337,7 @@ class HaRestApiClientTest extends TestCase
 
         $services = $client->services();
 
-        $this->assertSame(Fixtures::getServicesResponse(), $services);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $services);
 
         $this->assertCount(1, $historyContainer);
 
@@ -348,12 +366,15 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_url = null,
         ?DateTimeInterface $start_time = null,
         ?DateTimeInterface $end_time = null,
-    ): void {
+    ): void
+    {
+        $responseDefinition = new History();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getHistoryResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -386,7 +407,7 @@ class HaRestApiClientTest extends TestCase
 
         if ($expect_request_sent) {
             $this->assertCount(1, $historyContainer);
-            $this->assertSame(Fixtures::getHistoryResponse(), $history);
+            $this->assertSame($responseDefinition->getBodyAsArray(), $history);
             /** @var Request $request */
             $request = $historyContainer[0]['request'];
 
@@ -490,12 +511,15 @@ class HaRestApiClientTest extends TestCase
         ?DateTimeInterface $start_time = null,
         ?DateTimeInterface $end_time = null,
         ?string            $entity_id = null,
-    ): void {
+    ): void
+    {
+        $responseDefinition = new Logbook();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getLogbookResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -514,7 +538,7 @@ class HaRestApiClientTest extends TestCase
         );
 
         $this->assertCount(1, $historyContainer);
-        $this->assertSame(Fixtures::getLogbookResponse(), $logbook);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $logbook);
         /** @var Request $request */
         $request = $historyContainer[0]['request'];
 
@@ -568,11 +592,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_states(): void
     {
+        $responseDefinition = new States();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getStatesResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -587,7 +613,7 @@ class HaRestApiClientTest extends TestCase
         $states = $client->states();
 
         $this->assertCount(1, $historyContainer);
-        $this->assertSame(Fixtures::getStatesResponse(), $states);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $states);
         /** @var Request $request */
         $request = $historyContainer[0]['request'];
 
@@ -603,15 +629,16 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     #[DataProvider('client_can_get_state_provider')]
     public function client_can_get_state(
-        Response $response,
-        bool     $expect_error,
-        ?string  $expected_error_message = null,
-    ): void {
+        ResponseDefinition $response_definition,
+        bool               $expect_error,
+        ?string            $expected_error_message = null,
+    ): void
+    {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            $response
+            $response_definition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -628,7 +655,7 @@ class HaRestApiClientTest extends TestCase
             if ($expect_error) {
                 $this->fail('Should have failed.');
             }
-            $this->assertSame(Fixtures::getStateResponse(), $state);
+            $this->assertSame($response_definition->getBodyAsArray(), $state);
         } catch (HaException $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
@@ -653,27 +680,29 @@ class HaRestApiClientTest extends TestCase
     public static function client_can_get_state_provider(): Generator
     {
         yield 'success' => [
-            'response'               => new Response(200, body: json_encode(Fixtures::getStateResponse())),
+            'response_definition'    => new State(),
             'expect_error'           => false,
             'expected_error_message' => null,
         ];
 
         yield 'error' => [
-            'response'               => GuzzleHelpers::getNotFoundResponse(),
+            'response_definition'    => $stateEntityNotFound = new StateEntityNotFound(),
             'expect_error'           => true,
             // TODO - handle this error message better.
-            'expected_error_message' => '{"message":"Entity not found."}',
+            'expected_error_message' => $stateEntityNotFound->bodyContent,
         ];
     }
 
     #[Test]
     public function client_can_get_error_log(): void
     {
+        $responseDefinition = new ErrorLog();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, ['Content-Type' => 'text/plain'], body: Fixtures::getErrorLogResponse()),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -688,7 +717,7 @@ class HaRestApiClientTest extends TestCase
         $errorLog = $client->errorLog();
 
         $this->assertCount(1, $historyContainer);
-        $this->assertSame(['response' => Fixtures::getErrorLogResponse()], $errorLog);
+        $this->assertSame(['response' => $responseDefinition->bodyContent], $errorLog);
         /** @var Request $request */
         $request = $historyContainer[0]['request'];
 
@@ -704,11 +733,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_calendars(): void
     {
+        $responseDefinition = new Calendars();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getCalendarsResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -723,7 +754,7 @@ class HaRestApiClientTest extends TestCase
         $calendars = $client->calendars();
 
         $this->assertCount(1, $historyContainer);
-        $this->assertSame(Fixtures::getCalendarsResponse(), $calendars);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $calendars);
         /** @var Request $request */
         $request = $historyContainer[0]['request'];
 
@@ -739,11 +770,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_calendar_events(): void
     {
+        $responseDefinition = new CalendarEvents();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getCalendarEventsResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -762,7 +795,7 @@ class HaRestApiClientTest extends TestCase
         );
 
         $this->assertCount(1, $historyContainer);
-        $this->assertSame(Fixtures::getCalendarEventsResponse(), $calendarEvents);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $calendarEvents);
         /** @var Request $request */
         $request = $historyContainer[0]['request'];
 
@@ -845,9 +878,10 @@ class HaRestApiClientTest extends TestCase
     #[DataProvider('client_can_fire_event_provider')]
     public function client_can_fire_event(
         ResponseDefinition $response_definition,
-        string $event_type,
-        ?array $event_data = null
-    ): void {
+        string             $event_type,
+        ?array             $event_data = null
+    ): void
+    {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
@@ -893,20 +927,20 @@ class HaRestApiClientTest extends TestCase
     {
         yield 'home_assistant_start' => [
             'response_definition' => new FireEventHomeAssistantStart(),
-            'event_type' => 'home_assistant_start',
-            'event_data' => null,
+            'event_type'          => 'home_assistant_start',
+            'event_data'          => null,
         ];
 
         yield 'home_assistant_stop' => [
             'response_definition' => new FireEventHomeAssistantStop(),
-            'event_type' => 'home_assistant_stop',
-            'event_data' => null,
+            'event_type'          => 'home_assistant_stop',
+            'event_data'          => null,
         ];
 
         yield 'script_started' => [
             'response_definition' => new FireEventScriptStarted(),
-            'event_type' => 'script_started',
-            'event_data' => [
+            'event_type'          => 'script_started',
+            'event_data'          => [
                 'name'      => 'Turn All Lights Off',
                 'entity_id' => 'script.turn_all_lights_off'
             ],
@@ -916,11 +950,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_call_service(): void
     {
+        $responseDefinition = new CallService();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getCallServiceResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -938,7 +974,7 @@ class HaRestApiClientTest extends TestCase
 
         $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
 
-        $this->assertSame(Fixtures::getCallServiceResponse(), $response);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $response);
 
         $this->assertCount(1, $historyContainer);
 
@@ -1021,10 +1057,11 @@ class HaRestApiClientTest extends TestCase
     #[DataProvider('client_can_render_template_provider')]
     public function client_can_render_template(
         ResponseDefinition $response_definition,
-        string $template,
+        string             $template,
         bool               $expect_error,
         ?string            $expected_error_message = null,
-    ): void {
+    ): void
+    {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
@@ -1144,7 +1181,8 @@ class HaRestApiClientTest extends TestCase
         ResponseDefinition $response_definition,
         bool               $expect_error,
         ?string            $expected_error_message = null,
-    ): void {
+    ): void
+    {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
@@ -1247,7 +1285,8 @@ class HaRestApiClientTest extends TestCase
         Request $request,
         string  $bearerToken,
         string  $url
-    ) {
+    )
+    {
         // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);

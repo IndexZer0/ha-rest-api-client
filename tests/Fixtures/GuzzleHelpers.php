@@ -35,11 +35,6 @@ class GuzzleHelpers
         return new Response(401, body: '401: Unauthorized', reason: 'Unauthorized');
     }
 
-    public static function getNotFoundResponse(): Response
-    {
-        return new Response(404, body: '{"message":"Entity not found."}', reason: 'Not Found');
-    }
-
     // TODO getMethodNotAllowedResponse
 
     /**
@@ -60,6 +55,13 @@ class GuzzleHelpers
 
     public static function getServerErrorResponse(): Response
     {
-        return new Response(500, body: 'Server error');
+        return new Response(
+            500,
+            ['Content-Type' => 'text/plain; charset=utf-8'],
+            body: "500 Internal Server Error
+
+Server got itself in trouble",
+            reason: "Internal Server Error"
+        );
     }
 }
