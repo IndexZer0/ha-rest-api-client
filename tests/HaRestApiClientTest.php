@@ -19,6 +19,7 @@ use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CheckConfig\CheckConfig;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStart;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStop;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventScriptStarted;
@@ -1082,6 +1083,49 @@ class HaRestApiClientTest extends TestCase
             'expect_error'           => true,
             'expected_error_message' => $badRequest->bodyContent,
         ];
+    }
+
+    #[Test]
+    public function client_can_check_config(): void {
+        $checkConfigResponseDefinition = new CheckConfig();
+
+        // Setup Handler stack.
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            $checkConfigResponseDefinition->getResponse()
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        // Create client.
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        // Call method.
+        $checkConfig = $client->checkConfig();
+
+        // Assert client returns correct data.
+        $this->assertSame($checkConfigResponseDefinition->getBodyAsArray(), $checkConfig);
+
+        // Assert request sent correctly.
+        $this->assertCount(1, $historyContainer);
+
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'config/core/check_config'
+        );
     }
 
     #[Test]

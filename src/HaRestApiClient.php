@@ -252,13 +252,12 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function checkConfig(): array
+    public function checkConfig(): array
     {
         return $this->handleRequest(function () {
             return $this->guzzleClient->post('config/core/check_config');
         });
-    }*/
+    }
 
     // TODO
     /*public function handleIntent(array $data): array
