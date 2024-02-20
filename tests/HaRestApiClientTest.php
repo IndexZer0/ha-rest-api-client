@@ -6,8 +6,6 @@ namespace IndexZer0\HaRestApiClient\Tests;
 
 use DateTime;
 use DateTimeInterface;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Generator;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -21,6 +19,11 @@ use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\ResponseDefinition;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateCreatedEntity;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateUpdatedEntity;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class HaRestApiClientTest extends TestCase
@@ -755,6 +758,72 @@ class HaRestApiClientTest extends TestCase
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'calendars/calendar.birthdays?start=2024-02-10T12%3A02%3A00%2B00%3A00&end=2024-02-20T11%3A02%3A59%2B00%3A00'
         );
+    }
+
+    #[Test]
+    #[DataProvider('client_can_update_state_provider')]
+    public function client_can_update_state(ResponseDefinition $response_definition): void
+    {
+        // Setup Handler stack.
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+        $mockHandler = new MockHandler([
+            $response_definition->getResponse()
+        ]);
+        $handlerStack = HandlerStack::create($mockHandler);
+        $handlerStack->push($historyMiddleware);
+
+        // Create client.
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        // Call method.
+        $payload = [
+            'state'      => $state = 'on',
+            'attributes' => $attributes = [
+                'attr1' => 1,
+                'attr2' => [
+                    'attr3' => 'three'
+                ],
+            ]
+        ];
+        $updateState = $client->updateState(
+            $entityId = 'sensor.test_api',
+            $state,
+            $attributes
+        );
+
+        // Assert client returns correct data.
+        $this->assertSame($response_definition->getBodyAsArray(), $updateState);
+
+        // Assert request sent correctly.
+        $this->assertCount(1, $historyContainer);
+
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . "states/{$entityId}"
+        );
+    }
+
+    public static function client_can_update_state_provider(): Generator
+    {
+        yield 'create' => [
+            'response_definition' => new UpdateStateCreatedEntity(),
+        ];
+
+        yield 'update' => [
+            'response_definition' => new UpdateStateUpdatedEntity(),
+        ];
     }
 
     #[Test]
