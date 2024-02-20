@@ -588,8 +588,7 @@ class HaRestApiClientTest extends TestCase
         Response $response,
         bool     $expect_error,
         ?string  $expected_error_message = null,
-    ): void
-    {
+    ): void {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
