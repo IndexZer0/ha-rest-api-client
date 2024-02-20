@@ -21,8 +21,7 @@ class HaRestApiClient
         private string           $bearerToken,
         private HaInstanceConfig $config = new HaInstanceConfig(),
         private ?HandlerStack    $handlerStack = null
-    )
-    {
+    ) {
         $this->initGuzzleClient();
     }
 
@@ -73,8 +72,7 @@ class HaRestApiClient
         bool               $minimalResponse = false,
         bool               $noAttributes = false,
         bool               $significantChangesOnly = false,
-    ): array
-    {
+    ): array {
         if (count($entityIds) < 1) {
             throw new HaException('Provide at least one entity id.');
         }
@@ -121,8 +119,7 @@ class HaRestApiClient
         ?string            $entityId = null,
         ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
-    ): array
-    {
+    ): array {
         $path = "logbook";
 
         $dateFormat = 'Y-m-d\Th:m:sP';
@@ -190,8 +187,7 @@ class HaRestApiClient
         string            $entityId,
         DateTimeInterface $start,
         DateTimeInterface $end,
-    ): array
-    {
+    ): array {
         $dateFormat = 'Y-m-d\Th:m:sP';
 
         $queryParams = [
