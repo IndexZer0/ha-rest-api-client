@@ -1581,11 +1581,11 @@ class Fixtures
                     'date' => '2024-02-16',
                 ],
                 'summary'       => 'Friend Birthday',
-                'description'   => NULL,
-                'location'      => NULL,
-                'uid'           => NULL,
-                'recurrence_id' => NULL,
-                'rrule'         => NULL,
+                'description'   => null,
+                'location'      => null,
+                'uid'           => null,
+                'recurrence_id' => null,
+                'rrule'         => null,
             ],
         ];
     }
