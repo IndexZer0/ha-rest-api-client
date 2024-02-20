@@ -1513,6 +1513,47 @@ class Fixtures
         ];
     }
 
+    public static function getStateResponse(): array
+    {
+        return [
+            'entity_id' => 'light.bedroom_ceiling',
+            'state' => 'off',
+            'attributes' => [
+                'min_color_temp_kelvin' => 2702,
+                'max_color_temp_kelvin' => 6535,
+                'min_mireds' => 153,
+                'max_mireds' => 370,
+                'effect_list' => [
+                    'Slow Temp',
+                    'Stop',
+                ],
+                'supported_color_modes' => [
+                    'color_temp',
+                ],
+                'effect' => NULL,
+                'color_mode' => NULL,
+                'brightness' => NULL,
+                'color_temp_kelvin' => NULL,
+                'color_temp' => NULL,
+                'hs_color' => NULL,
+                'rgb_color' => NULL,
+                'xy_color' => NULL,
+                'flowing' => false,
+                'music_mode' => false,
+                'night_light' => true,
+                'friendly_name' => 'Bedroom Ceiling',
+                'supported_features' => 44,
+            ],
+            'last_changed' => '2024-02-19T17:59:01.968173+00:00',
+            'last_updated' => '2024-02-19T17:59:01.968173+00:00',
+            'context' => [
+                'id' => 'context-id',
+                'parent_id' => NULL,
+                'user_id' => 'context-user-id',
+            ],
+        ];
+    }
+
     public static function getCallServiceResponse(): array
     {
         return [

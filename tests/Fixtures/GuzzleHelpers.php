@@ -35,7 +35,11 @@ class GuzzleHelpers
         return new Response(401, body: '401: Unauthorized', reason: 'Unauthorized');
     }
 
-    // TODO getNotFoundResponse
+    public static function getNotFoundResponse(): Response
+    {
+        return new Response(404, body: '{"message":"Entity not found."}', reason: 'Not Found');
+    }
+
     // TODO getMethodNotAllowedResponse
 
     /**

@@ -586,6 +586,73 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('client_can_get_state_provider')]
+    public function client_can_get_state(
+        Response $response,
+        bool     $expect_error,
+        ?string  $expected_error_message = null,
+    ): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            $response
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        try {
+            $state = $client->state('light.bedroom_ceiling');
+            if ($expect_error) {
+                $this->fail('Should have failed.');
+            }
+            $this->assertSame(Fixtures::getStateResponse(), $state);
+        } catch (HaException $haException) {
+            if (!$expect_error) {
+                $this->fail('Should not have failed.');
+            }
+            $this->assertSame($expected_error_message, $haException->getMessage());
+        }
+
+        $this->assertCount(1, $historyContainer);
+
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . "states/light.bedroom_ceiling"
+        );
+    }
+
+    public static function client_can_get_state_provider(): Generator
+    {
+        yield 'success' => [
+            'response'               => new Response(200, body: json_encode(Fixtures::getStateResponse())),
+            'expect_error'           => false,
+            'expected_error_message' => null,
+        ];
+
+        yield 'error' => [
+            'response'               => GuzzleHelpers::getNotFoundResponse(),
+            'expect_error'           => true,
+            // TODO - handle this error message better.
+            'expected_error_message' => '{"message":"Entity not found."}',
+        ];
+    }
+
+    #[Test]
     public function client_can_call_service(): void
     {
         $historyContainer = [];

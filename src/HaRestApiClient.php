@@ -153,13 +153,12 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function state(string $entityId): array
+    public function state(string $entityId): array
     {
         return $this->handleRequest(function () use ($entityId) {
             return $this->guzzleClient->get("states/{$entityId}");
         });
-    }*/
+    }
 
     // TODO
     /*public function errorLog(): array
