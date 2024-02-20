@@ -115,21 +115,36 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function logbook(?DateTimeInterface $periodBeginning = null): array
+    public function logbook(
+        ?string $entityId = null,
+        ?DateTimeInterface $startTime = null,
+        ?DateTimeInterface $endTime = null,
+    ): array
     {
-        // TODO get params.
+        $path = "logbook";
 
-        $path = "logbook/";
+        $dateFormat = 'Y-m-d\Th:m:sP';
 
-        if ($periodBeginning !== null ) {
-            $path .= $periodBeginning->format('YYYY-MM-DDThh:mm:ssTZD');
+        if ($startTime !== null) {
+            $path .= '/' . $startTime->format($dateFormat);
         }
 
-        return $this->handleRequest(function () use ($path) {
-            return $this->guzzleClient->get($path);
+        $queryParams = [];
+
+        if ($entityId !== null) {
+            $queryParams['entity'] = $entityId;
+        }
+
+        if ($endTime !== null) {
+            $queryParams['end_time'] = $endTime->format($dateFormat);
+        }
+
+        return $this->handleRequest(function () use ($path, $queryParams) {
+            return $this->guzzleClient->get($path, [
+                'query' => $queryParams
+            ]);
         });
-    }*/
+    }
 
     // TODO
     /*public function states(): array

@@ -1404,6 +1404,33 @@ class Fixtures
         ];
     }
 
+    public static function getLogbookResponse(): array
+    {
+        return [
+            [
+                'when' => '2024-02-20T03:30:37.419923+00:00',
+                'state' => 'off',
+                'entity_id' => 'light.bedroom_ceiling_nightlight',
+                'name' => 'Bedroom Ceiling Nightlight',
+                'icon' => 'mdi:weather-night',
+            ],
+            [
+                'when' => '2024-02-20T04:10:23.441323+00:00',
+                'state' => 'on',
+                'entity_id' => 'light.bedroom_ceiling_nightlight',
+                'name' => 'Bedroom Ceiling Nightlight',
+                'icon' => 'mdi:weather-night',
+            ],
+            [
+                'when' => '2024-02-20T04:16:30.242207+00:00',
+                'state' => 'off',
+                'entity_id' => 'light.bedroom_ceiling_nightlight',
+                'name' => 'Bedroom Ceiling Nightlight',
+                'icon' => 'mdi:weather-night',
+            ],
+        ];
+    }
+
     public static function getCallServiceResponse(): array
     {
         return [

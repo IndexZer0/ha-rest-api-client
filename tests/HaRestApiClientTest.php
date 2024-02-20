@@ -81,7 +81,8 @@ class HaRestApiClientTest extends TestCase
     public function client_uses_correct_instance_config(
         HaInstanceConfig $ha_instance_config,
         string           $expected_url
-    ): void {
+    ): void
+    {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
@@ -325,12 +326,13 @@ class HaRestApiClientTest extends TestCase
         bool               $no_attributes,
         bool               $significant_changes_only,
         bool               $expect_error,
-        ?string            $expected_error_message,
+        ?string            $expected_error_message = null,
         bool               $expect_request_sent,
-        ?string            $expected_url,
-        ?DateTimeInterface $start_time,
+        ?string            $expected_url = null,
+        ?DateTimeInterface $start_time = null,
         ?DateTimeInterface $end_time = null,
-    ): void {
+    ): void
+    {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
@@ -466,6 +468,89 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('client_can_get_logbook_provider')]
+    public function client_can_get_logbook(
+        string             $expected_url,
+        ?DateTimeInterface $start_time = null,
+        ?DateTimeInterface $end_time = null,
+        ?string            $entity_id = null,
+    ): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getLogbookResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        $history = $client->logbook(
+            $entity_id,
+            $start_time,
+            $end_time,
+        );
+
+        $this->assertCount(1, $historyContainer);
+        $this->assertSame(Fixtures::getLogbookResponse(), $history);
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . $expected_url
+        );
+    }
+
+    public static function client_can_get_logbook_provider(): Generator
+    {
+        yield 'null params' => [
+            'entity_id'    => null,
+            'start_time'   => null,
+            'end_time'     => null,
+            'expected_url' => 'logbook',
+        ];
+
+        yield 'entity_id' => [
+            'entity_id'    => 'light.bedroom_ceiling',
+            'start_time'   => null,
+            'end_time'     => null,
+            'expected_url' => 'logbook?entity=light.bedroom_ceiling',
+        ];
+
+        yield 'start_time' => [
+            'entity_id'    => null,
+            'start_time'   => new DateTime('2024-02-19 11:02:54'),
+            'end_time'     => null,
+            'expected_url' => 'logbook/2024-02-19T11:02:54+00:00',
+        ];
+
+        yield 'end_time' => [
+            'entity_id'    => null,
+            'start_time'   => null,
+            'end_time'     => new DateTime('2024-02-19 11:02:54'),
+            'expected_url' => 'logbook?end_time=2024-02-19T11%3A02%3A54%2B00%3A00',
+        ];
+
+        yield 'all params' => [
+            'entity_id'    => 'light.bedroom_ceiling',
+            'start_time'   => new DateTime('2024-02-19 11:02:54'),
+            'end_time'     => new DateTime('2024-02-19 11:02:54'),
+            'expected_url' => 'logbook/2024-02-19T11:02:54+00:00?entity=light.bedroom_ceiling&end_time=2024-02-19T11%3A02%3A54%2B00%3A00',
+        ];
+    }
+
+    #[Test]
     public function client_can_call_service(): void
     {
         $historyContainer = [];
@@ -593,7 +678,8 @@ class HaRestApiClientTest extends TestCase
         Request $request,
         string  $bearerToken,
         string  $url
-    ) {
+    )
+    {
         // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);
