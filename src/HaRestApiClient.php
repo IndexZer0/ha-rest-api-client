@@ -119,8 +119,7 @@ class HaRestApiClient
         ?string $entityId = null,
         ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
-    ): array
-    {
+    ): array {
         $path = "logbook";
 
         $dateFormat = 'Y-m-d\Th:m:sP';
