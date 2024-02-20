@@ -109,8 +109,7 @@ class HaRestApiClientTest extends TestCase
     public function client_uses_correct_instance_config(
         HaInstanceConfig $ha_instance_config,
         string           $expected_url
-    ): void
-    {
+    ): void {
         $responseDefinition = new Status();
 
         $historyContainer = [];
@@ -371,8 +370,7 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_url = null,
         ?DateTimeInterface $start_time = null,
         ?DateTimeInterface $end_time = null,
-    ): void
-    {
+    ): void {
         $responseDefinition = new History();
 
         $historyContainer = [];
@@ -516,8 +514,7 @@ class HaRestApiClientTest extends TestCase
         ?DateTimeInterface $start_time = null,
         ?DateTimeInterface $end_time = null,
         ?string            $entity_id = null,
-    ): void
-    {
+    ): void {
         $responseDefinition = new Logbook();
 
         $historyContainer = [];
@@ -637,8 +634,7 @@ class HaRestApiClientTest extends TestCase
         ResponseDefinition $response_definition,
         bool               $expect_error,
         ?string            $expected_error_message = null,
-    ): void
-    {
+    ): void {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
@@ -885,8 +881,7 @@ class HaRestApiClientTest extends TestCase
         ResponseDefinition $response_definition,
         string             $event_type,
         ?array             $event_data = null
-    ): void
-    {
+    ): void {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
@@ -1065,8 +1060,7 @@ class HaRestApiClientTest extends TestCase
         string             $template,
         bool               $expect_error,
         ?string            $expected_error_message = null,
-    ): void
-    {
+    ): void {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
@@ -1186,8 +1180,7 @@ class HaRestApiClientTest extends TestCase
         ResponseDefinition $response_definition,
         bool               $expect_error,
         ?string            $expected_error_message = null,
-    ): void
-    {
+    ): void {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
@@ -1290,8 +1283,7 @@ class HaRestApiClientTest extends TestCase
         Request $request,
         string  $bearerToken,
         string  $url
-    )
-    {
+    ) {
         // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);
