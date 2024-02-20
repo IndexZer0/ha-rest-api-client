@@ -1088,7 +1088,8 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
-    public function client_can_check_config(): void {
+    public function client_can_check_config(): void
+    {
         $checkConfigResponseDefinition = new CheckConfig();
 
         // Setup Handler stack.
