@@ -221,17 +221,16 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function fireEvent(
+    public function fireEvent(
         string $eventType,
-        ?array $eventData
+        ?array $eventData = null
     ): array {
         return $this->handleRequest(function () use ($eventType, $eventData) {
             return $this->guzzleClient->post("events/{$eventType}", [
                 RequestOptions::JSON => $eventData,
             ]);
         });
-    }*/
+    }
 
     public function callService(Domain $domain, Service $service, array $data): array
     {
