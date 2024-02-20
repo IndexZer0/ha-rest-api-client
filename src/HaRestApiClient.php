@@ -18,8 +18,8 @@ class HaRestApiClient
     public readonly GuzzleClient $guzzleClient;
 
     public function __construct(
-        private HaInstanceConfig $config = new HaInstanceConfig(),
         private string $bearerToken,
+        private HaInstanceConfig $config = new HaInstanceConfig(),
         private ?HandlerStack $handlerStack = null
     ) {
         $this->initGuzzleClient();
@@ -66,8 +66,8 @@ class HaRestApiClient
     }
 
     public function history(
-        ?DateTimeInterface $startTime = null,
         array $entityIds,
+        ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
         bool $minimalResponse = false,
         bool $noAttributes = false,

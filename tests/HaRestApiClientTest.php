@@ -44,8 +44,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $bearer_token,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -93,8 +93,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            $ha_instance_config,
             $this->defaultBearerToken,
+            $ha_instance_config,
             $handlerStack
         );
 
@@ -145,8 +145,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -183,8 +183,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             'bearerToken',
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -220,8 +220,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -257,8 +257,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -294,8 +294,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -342,15 +342,15 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($historyMiddleware);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
         try {
             $history = $client->history(
-                $start_time,
                 $entity_ids,
+                $start_time,
                 $end_time,
                 $minimal_response,
                 $no_attributes,
@@ -479,8 +479,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack,
         );
 
@@ -522,8 +522,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack->push($history);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
@@ -574,8 +574,8 @@ class HaRestApiClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
 
         $client = new HaRestApiClient(
-            new HaInstanceConfig(),
             $this->defaultBearerToken,
+            new HaInstanceConfig(),
             $handlerStack
         );
 
