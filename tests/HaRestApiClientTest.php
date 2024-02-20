@@ -81,8 +81,7 @@ class HaRestApiClientTest extends TestCase
     public function client_uses_correct_instance_config(
         HaInstanceConfig $ha_instance_config,
         string           $expected_url
-    ): void
-    {
+    ): void {
         $container = [];
         $history = Middleware::history($container);
 
@@ -331,8 +330,7 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_url,
         ?DateTimeInterface $start_time,
         ?DateTimeInterface $end_time = null,
-    ): void
-    {
+    ): void {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
@@ -595,8 +593,7 @@ class HaRestApiClientTest extends TestCase
         Request $request,
         string  $bearerToken,
         string  $url
-    )
-    {
+    ) {
         // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);

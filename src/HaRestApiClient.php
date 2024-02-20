@@ -72,8 +72,7 @@ class HaRestApiClient
         bool $minimalResponse = false,
         bool $noAttributes = false,
         bool $significantChangesOnly = false,
-    ): array
-    {
+    ): array {
         if (count($entityIds) < 1) {
             throw new HaException('Provide at least one entity id.');
         }
@@ -88,7 +87,7 @@ class HaRestApiClient
 
         $dateFormat = 'Y-m-d\Th:m:sP';
 
-        if ($startTime !== null ) {
+        if ($startTime !== null) {
             $path .= '/' . $startTime->format($dateFormat);
         }
 
@@ -96,7 +95,7 @@ class HaRestApiClient
             'minimal_response'         => $minimalResponse,
             'no_attributes'            => $noAttributes,
             'significant_changes_only' => $significantChangesOnly,
-        ], function($value) {
+        ], function ($value) {
             return $value === true;
         });
 
