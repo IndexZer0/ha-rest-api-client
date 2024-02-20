@@ -26,7 +26,7 @@ readonly class UpdateStateUpdatedEntity extends ResponseDefinition
                 'last_updated' => '2024-02-20T13:15:49.083978+00:00',
                 'context' => [
                     'id' => 'context-id',
-                    'parent_id' => NULL,
+                    'parent_id' => null,
                     'user_id' => 'context-user-id',
                 ],
             ]),
