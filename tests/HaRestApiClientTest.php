@@ -837,8 +837,7 @@ class HaRestApiClientTest extends TestCase
         ResponseDefinition $response_definition,
         string $event_type,
         ?array $event_data = null
-    ): void
-    {
+    ): void {
         // Setup Handler stack.
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
