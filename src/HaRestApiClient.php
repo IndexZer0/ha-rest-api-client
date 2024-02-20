@@ -160,13 +160,12 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function errorLog(): array
+    public function errorLog(): array
     {
         return $this->handleRequest(function () {
             return $this->guzzleClient->get('error_log');
         });
-    }*/
+    }
 
     // TODO
     /*public function camera(string $entityId): array
@@ -286,14 +285,25 @@ class HaRestApiClient
 
         $responseBodyContent = $response->getBody()->getContents();
 
-        try {
-            $json = json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
-            if (!is_array($json)) {
-                return [$json];
-            }
-            return $json;
-        } catch (JsonException $je) {
-            throw new HaException('Invalid JSON Response.', previous: $je);
+        $contentType = 'application/json';
+        if ($response->hasHeader('Content-Type')) {
+            $contentType = $response->getHeader('Content-Type')[0];
         }
+
+        if ($contentType === 'application/json') {
+            try {
+                $json = json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
+                if (!is_array($json)) {
+                    return [$json];
+                }
+                return $json;
+            } catch (JsonException $je) {
+                throw new HaException('Invalid JSON Response.', previous: $je);
+            }
+        }
+
+        return [
+            'response' => $responseBodyContent
+        ];
     }
 }

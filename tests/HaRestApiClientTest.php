@@ -653,6 +653,41 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
+    public function client_can_get_error_log(): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            new Response(200, ['Content-Type' => 'text/plain'], body: Fixtures::getErrorLogResponse()),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        $errorLog = $client->errorLog();
+
+        $this->assertCount(1, $historyContainer);
+        $this->assertSame(['response' => Fixtures::getErrorLogResponse()], $errorLog);
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'error_log'
+        );
+    }
+
+    #[Test]
     public function client_can_call_service(): void
     {
         $historyContainer = [];

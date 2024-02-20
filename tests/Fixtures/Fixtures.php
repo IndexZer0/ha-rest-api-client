@@ -1554,6 +1554,12 @@ class Fixtures
         ];
     }
 
+    public static function getErrorLogResponse(): string
+    {
+        return "2024-02-14 22:29:10.441 WARNING (SyncWorker_0) [homeassistant.loader] We found a custom integration browser_mod which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you experience issues with Home Assistant\n
+2024-02-14 22:29:10.447 WARNING (SyncWorker_0) [homeassistant.loader] We found a custom integration hacs which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you experience issues with Home Assistant\n";
+    }
+
     public static function getCallServiceResponse(): array
     {
         return [
