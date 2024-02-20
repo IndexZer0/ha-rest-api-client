@@ -243,15 +243,14 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function renderTemplate(string $template): array
+    public function renderTemplate(string $template): array
     {
         return $this->handleRequest(function () use ($template) {
             return $this->guzzleClient->post('template', [
                 RequestOptions::JSON => ['template' => $template],
             ]);
         });
-    }*/
+    }
 
     // TODO
     /*public function checkConfig(): array

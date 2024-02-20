@@ -22,6 +22,8 @@ use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStart;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStop;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventScriptStarted;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\RenderTemplate\RenderTemplateFailBadRequest;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\RenderTemplate\RenderTemplateSuccess;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\ResponseDefinition;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateCreatedEntity;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateUpdatedEntity;
@@ -1003,6 +1005,83 @@ class HaRestApiClientTest extends TestCase
         yield 'server error' => [
             'response'                   => GuzzleHelpers::getServerErrorResponse(),
             'expected_exception_message' => 'Unknown Error.'
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('client_can_render_template_provider')]
+    public function client_can_render_template(
+        ResponseDefinition $response_definition,
+        string $template,
+        bool               $expect_error,
+        ?string            $expected_error_message = null,
+    ): void {
+        // Setup Handler stack.
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            $response_definition->getResponse(),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        // Create client.
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        // Call method.
+        try {
+
+            $renderedTemplate = $client->renderTemplate($template);
+            if ($expect_error) {
+                $this->fail('Should have failed.');
+            }
+
+            // Assert client returns correct data.
+            $this->assertSame(['response' => $response_definition->bodyContent], $renderedTemplate);
+
+        } catch (HaException $haException) {
+            if (!$expect_error) {
+                $this->fail('Should not have failed.');
+            }
+            $this->assertSame($expected_error_message, $haException->getMessage());
+        }
+
+        // Assert request sent correctly.
+        $this->assertCount(1, $historyContainer);
+
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame(['template' => $template], json_decode($request->getBody()->getContents(), true));
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'template'
+        );
+    }
+
+    public static function client_can_render_template_provider(): Generator
+    {
+        yield 'success' => [
+            'response_definition'    => new RenderTemplateSuccess(),
+            'template'               => "The bedroom ceiling light is {{ states('light.bedroom_ceiling') }}.",
+            'expect_error'           => false,
+            'expected_error_message' => null,
+        ];
+
+        yield 'failure - bad request' => [
+            'response_definition'    => $badRequest = new RenderTemplateFailBadRequest(),
+            'template'               => "The bedroom ceiling light is {{ statess('light.bedroom_ceiling') }}.",
+            'expect_error'           => true,
+            'expected_error_message' => $badRequest->bodyContent,
         ];
     }
 
