@@ -11,13 +11,12 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
 use IndexZer0\HaRestApiClient\Domain;
 use IndexZer0\HaRestApiClient\HaException;
 use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Service;
-use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\Auth;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CalendarEvents\CalendarEvents;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Calendars\Calendars;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CallService\CallService;
@@ -25,8 +24,12 @@ use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CheckConfig\CheckConfig;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Config\Config;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\ErrorLog\ErrorLog;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Events\Events;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\BadRequest;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\ServerError;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\History\History;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Logbook\Logbook;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Misc\InvalidJson;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Misc\NullJson;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Services\Services;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\State\State;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\State\StateEntityNotFound;
@@ -162,11 +165,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_handles_unauthorized_response(): void
     {
+        $responseDefinition = new Auth();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            GuzzleHelpers::getUnauthorizedResponse()
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -993,13 +998,13 @@ class HaRestApiClientTest extends TestCase
 
     #[Test]
     #[DataProvider('call_service_handles_error_provider')]
-    public function call_service_handles_error(Response $response, string $expected_exception_message): void
+    public function call_service_handles_error(ResponseDefinition $response_definition, string $expected_exception_message): void
     {
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            $response
+            $response_definition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -1038,17 +1043,17 @@ class HaRestApiClientTest extends TestCase
     public static function call_service_handles_error_provider(): Generator
     {
         yield 'bad request' => [
-            'response'                   => $badRequest = GuzzleHelpers::getBadRequestResponse(),
-            'expected_exception_message' => $badRequest->getBody()->getContents()
+            'response_definition'        => $badRequest = new BadRequest(),
+            'expected_exception_message' => $badRequest->bodyContent
         ];
 
         yield 'invalid json' => [
-            'response'                   => GuzzleHelpers::getInvalidJsonResponse(),
+            'response_definition'        => new InvalidJson(),
             'expected_exception_message' => 'Invalid JSON Response.',
         ];
 
         yield 'server error' => [
-            'response'                   => GuzzleHelpers::getServerErrorResponse(),
+            'response_definition'        => new ServerError(),
             'expected_exception_message' => 'Unknown Error.'
         ];
     }
@@ -1250,7 +1255,7 @@ class HaRestApiClientTest extends TestCase
         ];
 
         yield 'failure - bad request' => [
-            'response_definition'    => $serverError = new HandleIntentFailServerError(),
+            'response_definition'    => new HandleIntentFailServerError(),
             'expect_error'           => true,
             'expected_error_message' => 'Unknown Error.',
         ];
@@ -1260,7 +1265,7 @@ class HaRestApiClientTest extends TestCase
     public function client_wraps_response_in_array_if_needed(): void
     {
         $mockHandler = new MockHandler([
-            GuzzleHelpers::getNullJsonResponse()
+            (new NullJson())->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
