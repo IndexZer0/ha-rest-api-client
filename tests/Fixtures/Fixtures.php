@@ -6,11 +6,6 @@ namespace IndexZer0\HaRestApiClient\Tests\Fixtures;
 
 class Fixtures
 {
-    public static function getDefaultStatusResponse(): array
-    {
-        return ['message' => 'API running.'];
-    }
-
     public static function getDefaultConfigResponse(): array
     {
         return [

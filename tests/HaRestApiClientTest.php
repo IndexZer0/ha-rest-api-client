@@ -20,6 +20,7 @@ use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CheckConfig\CheckConfig;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Status\Status;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStart;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStop;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventScriptStarted;
@@ -44,11 +45,13 @@ class HaRestApiClientTest extends TestCase
     #[DataProvider('client_sends_bearer_token_provider')]
     public function client_sends_bearer_token(string $bearer_token): void
     {
+        $responseDefinition = new Status();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandlerHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandlerHandler);
@@ -62,7 +65,7 @@ class HaRestApiClientTest extends TestCase
 
         $status = $client->status();
 
-        $this->assertSame(Fixtures::getDefaultStatusResponse(), $status);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $status);
 
         $this->assertCount(1, $historyContainer);
 
@@ -93,11 +96,13 @@ class HaRestApiClientTest extends TestCase
         HaInstanceConfig $ha_instance_config,
         string           $expected_url
     ): void {
+        $responseDefinition = new Status();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -111,7 +116,7 @@ class HaRestApiClientTest extends TestCase
 
         $status = $client->status();
 
-        $this->assertSame(Fixtures::getDefaultStatusResponse(), $status);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $status);
 
         $this->assertCount(1, $historyContainer);
 
@@ -183,11 +188,13 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_status(): void
     {
+        $responseDefinition = new Status();
+
         $historyContainer = [];
         $historyMiddleware = Middleware::history($historyContainer);
 
         $mockHandler = new MockHandler([
-            new Response(200, body: json_encode(Fixtures::getDefaultStatusResponse())),
+            $responseDefinition->getResponse()
         ]);
 
         $handlerStack = HandlerStack::create($mockHandler);
@@ -201,7 +208,7 @@ class HaRestApiClientTest extends TestCase
 
         $status = $client->status();
 
-        $this->assertSame(Fixtures::getDefaultStatusResponse(), $status);
+        $this->assertSame($responseDefinition->getBodyAsArray(), $status);
 
         $this->assertCount(1, $historyContainer);
 
