@@ -492,14 +492,14 @@ class HaRestApiClientTest extends TestCase
             $handlerStack
         );
 
-        $history = $client->logbook(
+        $logbook = $client->logbook(
             $entity_id,
             $start_time,
             $end_time,
         );
 
         $this->assertCount(1, $historyContainer);
-        $this->assertSame(Fixtures::getLogbookResponse(), $history);
+        $this->assertSame(Fixtures::getLogbookResponse(), $logbook);
         /** @var Request $request */
         $request = $historyContainer[0]['request'];
 
@@ -548,6 +548,41 @@ class HaRestApiClientTest extends TestCase
             'end_time'     => new DateTime('2024-02-19 11:02:54'),
             'expected_url' => 'logbook/2024-02-19T11:02:54+00:00?entity=light.bedroom_ceiling&end_time=2024-02-19T11%3A02%3A54%2B00%3A00',
         ];
+    }
+
+    #[Test]
+    public function client_can_get_states(): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandlerHandler = new MockHandler([
+            new Response(200, body: json_encode(Fixtures::getStatesResponse())),
+        ]);
+
+        $handlerStack = HandlerStack::create($mockHandlerHandler);
+        $handlerStack->push($historyMiddleware);
+
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        $states = $client->states();
+
+        $this->assertCount(1, $historyContainer);
+        $this->assertSame(Fixtures::getStatesResponse(), $states);
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('GET', $request->getMethod());
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . 'states'
+        );
     }
 
     #[Test]
