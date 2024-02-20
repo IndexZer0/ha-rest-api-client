@@ -206,8 +206,7 @@ class HaRestApiClient
         });
     }
 
-    // TODO
-    /*public function updateState(
+    public function updateState(
         string $entityId,
         string $state,
         ?array $attributes
@@ -224,7 +223,7 @@ class HaRestApiClient
                 RequestOptions::JSON => $data,
             ]);
         });
-    }*/
+    }
 
     // TODO
     /*public function fireEvent(
