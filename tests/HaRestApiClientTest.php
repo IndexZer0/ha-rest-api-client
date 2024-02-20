@@ -19,6 +19,9 @@ use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\Fixtures;
 use IndexZer0\HaRestApiClient\Tests\Fixtures\GuzzleHelpers;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStart;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventHomeAssistantStop;
+use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\FireEvent\FireEventScriptStarted;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\ResponseDefinition;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateCreatedEntity;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateUpdatedEntity;
@@ -823,6 +826,79 @@ class HaRestApiClientTest extends TestCase
 
         yield 'update' => [
             'response_definition' => new UpdateStateUpdatedEntity(),
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('client_can_fire_event_provider')]
+    public function client_can_fire_event(
+        ResponseDefinition $response_definition,
+        string $event_type,
+        ?array $event_data = null
+    ): void
+    {
+        // Setup Handler stack.
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+        $mockHandler = new MockHandler([
+            $response_definition->getResponse()
+        ]);
+        $handlerStack = HandlerStack::create($mockHandler);
+        $handlerStack->push($historyMiddleware);
+
+        // Create client.
+        $client = new HaRestApiClient(
+            $this->defaultBearerToken,
+            new HaInstanceConfig(),
+            $handlerStack
+        );
+
+        // Call method.
+        $fireEvent = $client->fireEvent(
+            $event_type,
+            $event_data
+        );
+
+        // Assert client returns correct data.
+        $this->assertSame($response_definition->getBodyAsArray(), $fireEvent);
+
+        // Assert request sent correctly.
+        $this->assertCount(1, $historyContainer);
+
+        /** @var Request $request */
+        $request = $historyContainer[0]['request'];
+
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame($event_data, json_decode($request->getBody()->getContents(), true));
+
+        $this->performCommonGuzzleRequestAssertions(
+            $request,
+            $this->defaultBearerToken,
+            $this->defaultBaseUri . "events/{$event_type}"
+        );
+    }
+
+    public static function client_can_fire_event_provider(): Generator
+    {
+        yield 'home_assistant_start' => [
+            'response_definition' => new FireEventHomeAssistantStart(),
+            'event_type' => 'home_assistant_start',
+            'event_data' => null,
+        ];
+
+        yield 'home_assistant_stop' => [
+            'response_definition' => new FireEventHomeAssistantStop(),
+            'event_type' => 'home_assistant_stop',
+            'event_data' => null,
+        ];
+
+        yield 'script_started' => [
+            'response_definition' => new FireEventScriptStarted(),
+            'event_type' => 'script_started',
+            'event_data' => [
+                'name'      => 'Turn All Lights Off',
+                'entity_id' => 'script.turn_all_lights_off'
+            ],
         ];
     }
 
