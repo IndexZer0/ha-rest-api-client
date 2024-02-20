@@ -176,13 +176,12 @@ class HaRestApiClient
         });
     }*/
 
-    // TODO
-    /*public function calendars(): array
+    public function calendars(): array
     {
         return $this->handleRequest(function () {
             return $this->guzzleClient->get('calendars');
         });
-    }*/
+    }
 
     // TODO
     /*public function calendarEvents(string $entityId): array

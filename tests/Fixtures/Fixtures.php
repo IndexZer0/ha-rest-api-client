@@ -1560,6 +1560,16 @@ class Fixtures
 2024-02-14 22:29:10.447 WARNING (SyncWorker_0) [homeassistant.loader] We found a custom integration hacs which has not been tested by Home Assistant. This component might cause stability problems, be sure to disable it if you experience issues with Home Assistant\n";
     }
 
+    public static function getCalendarsResponse(): array
+    {
+        return [
+            [
+                'name' => 'Birthdays',
+                'entity_id' => 'calendar.birthdays',
+            ],
+        ];
+    }
+
     public static function getCallServiceResponse(): array
     {
         return [
