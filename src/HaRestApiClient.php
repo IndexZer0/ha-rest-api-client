@@ -280,13 +280,10 @@ class HaRestApiClient
             /** @var ResponseInterface $response */
             $response = $callable();
         } catch (ClientException $ce) {
-            //$this->debug($ce->getResponse());
             throw new HaException($ce->getResponse()->getBody()->getContents(), previous: $ce);
         } catch (Throwable $t) {
             throw new HaException('Unknown Error.', previous: $t);
         }
-
-        //$this->debug($response);
 
         $responseBodyContent = $response->getBody()->getContents();
 
@@ -310,15 +307,5 @@ class HaRestApiClient
         return [
             'response' => $responseBodyContent
         ];
-    }
-
-    private function debug(ResponseInterface $response)
-    {
-        dd(
-            $response->getStatusCode(),
-            $response->getHeaders(),
-            $response->getBody()->getContents(),
-            $response->getReasonPhrase()
-        );
     }
 }
