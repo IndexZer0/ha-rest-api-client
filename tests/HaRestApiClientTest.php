@@ -11,11 +11,9 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
-use IndexZer0\HaRestApiClient\Domain;
 use IndexZer0\HaRestApiClient\HaException;
 use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
-use IndexZer0\HaRestApiClient\Service;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\Auth;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CalendarEvents\CalendarEvents;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Calendars\Calendars;
@@ -972,7 +970,7 @@ class HaRestApiClientTest extends TestCase
             'entity_id' => 'light.bedroom_ceiling'
         ];
 
-        $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
+        $response = $client->callService('light', 'turn_on', $payload);
 
         $this->assertSame($responseDefinition->getBodyAsArray(), $response);
 
@@ -1014,7 +1012,7 @@ class HaRestApiClientTest extends TestCase
         $payload = [];
 
         try {
-            $response = $client->callService(Domain::LIGHT, Service::TURN_ON, $payload);
+            $response = $client->callService('light', 'turn_on', $payload);
             $this->fail();
         } catch (HaException $haException) {
             $this->assertSame($expected_exception_message, $haException->getMessage());
