@@ -3,7 +3,11 @@
     "description": "Simple client for accessing home assistant rest api.",
     "keywords": [
         "IndexZer0",
-        "ha-rest-api-client"
+        "ha-rest-api-client",
+        "Home Assistant",
+        "Smart Tech",
+        "Rest API",
+        "Guzzle"
     ],
     "homepage": "https://github.com/indexzer0/ha-rest-api-client",
     "license": "MIT",
@@ -35,13 +39,12 @@
     },
     "scripts": {
         "test": "vendor/bin/phpunit",
-            "test-coverage": "vendor/bin/phpunit --coverage",
+        "test-coverage": "vendor/bin/phpunit --coverage",
         "format": "vendor/bin/pint"
     },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
-
             "phpstan/extension-installer": true
         }
     },
