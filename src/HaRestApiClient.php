@@ -18,9 +18,9 @@ class HaRestApiClient
     public readonly GuzzleClient $guzzleClient;
 
     public function __construct(
-        private string           $bearerToken,
-        private HaInstanceConfig $config = new HaInstanceConfig(),
-        private ?HandlerStack    $handlerStack = null
+        private string        $bearerToken,
+        private string        $baseUri,
+        private ?HandlerStack $handlerStack = null
     ) {
         $this->initGuzzleClient();
     }
@@ -28,7 +28,7 @@ class HaRestApiClient
     protected function initGuzzleClient(): void
     {
         $this->guzzleClient = new GuzzleClient([
-            'base_uri' => $this->config->getUrL(),
+            'base_uri' => $this->baseUri,
             'headers'  => [
                 'Authorization' => "Bearer {$this->bearerToken}",
                 'Content-Type'  => 'application/json',

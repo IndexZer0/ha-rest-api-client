@@ -12,7 +12,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use IndexZer0\HaRestApiClient\HaException;
-use IndexZer0\HaRestApiClient\HaInstanceConfig;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\Auth;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CalendarEvents\CalendarEvents;
@@ -71,7 +70,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $bearer_token,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -103,10 +102,10 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('client_uses_correct_instance_config_provider')]
-    public function client_uses_correct_instance_config(
-        HaInstanceConfig $ha_instance_config,
-        string           $expected_url
+    #[DataProvider('client_uses_correct_base_uri_provider')]
+    public function client_uses_correct_base_uri(
+        string $base_uri,
+        string $expected_url
     ): void {
         $responseDefinition = new Status();
 
@@ -122,7 +121,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            $ha_instance_config,
+            $base_uri,
             $handlerStack
         );
 
@@ -142,20 +141,16 @@ class HaRestApiClientTest extends TestCase
         );
     }
 
-    public static function client_uses_correct_instance_config_provider(): Generator
+    public static function client_uses_correct_base_uri_provider(): Generator
     {
         yield 'default' => [
-            'ha_instance_config' => new HaInstanceConfig(),
-            'expected_url'       => 'http://localhost:8123/api/',
+            'base_uri'     => 'http://localhost:8123/api/',
+            'expected_url' => 'http://localhost:8123/api/',
         ];
 
         yield 'different' => [
-            'ha_instance_config' => new HaInstanceConfig(
-                'foreignhost',
-                8124,
-                '/api2/'
-            ),
-            'expected_url'       => 'http://foreignhost:8124/api2/',
+            'base_uri'     => 'http://foreignhost:8124/api2/',
+            'expected_url' => 'http://foreignhost:8124/api2/',
         ];
     }
 
@@ -176,7 +171,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -216,7 +211,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             'bearerToken',
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -255,7 +250,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -294,7 +289,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -333,7 +328,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -383,7 +378,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -527,7 +522,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -606,7 +601,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -645,7 +640,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -709,7 +704,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -746,7 +741,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -783,7 +778,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -823,7 +818,7 @@ class HaRestApiClientTest extends TestCase
         // Create client.
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -892,7 +887,7 @@ class HaRestApiClientTest extends TestCase
         // Create client.
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -962,7 +957,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack,
         );
 
@@ -1005,7 +1000,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -1073,7 +1068,7 @@ class HaRestApiClientTest extends TestCase
         // Create client.
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -1147,7 +1142,7 @@ class HaRestApiClientTest extends TestCase
         // Create client.
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -1193,7 +1188,7 @@ class HaRestApiClientTest extends TestCase
         // Create client.
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
@@ -1263,7 +1258,7 @@ class HaRestApiClientTest extends TestCase
 
         $client = new HaRestApiClient(
             $this->defaultBearerToken,
-            new HaInstanceConfig(),
+            $this->defaultBaseUri,
             $handlerStack
         );
 
