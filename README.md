@@ -30,10 +30,41 @@ composer require indexzer0/ha-rest-api-client
 ```php
 $client = new \IndexZer0\HaRestApiClient\HaRestApiClient(
     'token',
-    new HaInstanceConfig()
+    'http://localhost:8123/api/'
 );
 $client->status(); // ['message' => 'API running.']
-$client->checkConfig(); // ["result" => "valid", "errors" => null, "warnings" => null]
+```
+
+### Available Methods
+
+```php
+$client->status();
+$client->config();
+$client->events();
+$client->services();
+$client->history(['light.bedroom_ceiling']);
+$client->logbook();
+$client->states();
+$client->state('light.bedroom_ceiling');
+$client->errorLog();
+$client->calendars();
+$client->calendarEvents('calendar.birthdays');
+$client->updateState('light.bedroom_ceiling', 'on');
+$client->fireEvent('script_started', [
+    'name'      => 'Turn All Lights Off',
+    'entity_id' => 'script.turn_all_lights_off'
+]);
+$client->callService('light', 'turn_on', [
+    'entity_id' => 'light.bedroom_ceiling'
+]);
+$client->renderTemplate("The bedroom ceiling light is {{ states('light.bedroom_ceiling') }}.");
+$client->checkConfig();
+$client->handleIntent([
+    'name' => 'SetTimer',
+    'data' => [
+        'seconds' => '30',
+    ]
+]);
 ```
 
 ## Testing
