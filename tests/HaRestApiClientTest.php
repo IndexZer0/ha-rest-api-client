@@ -52,39 +52,32 @@ class HaRestApiClientTest extends TestCase
 
     private string $defaultBaseUri = 'http://localhost:8123/api/';
 
+    private array $historyContainer = [];
+    private MockHandler $mockHandler;
+    private HandlerStack $handlerStack;
+
+    public function setUp(): void
+    {
+        $this->setupHandlerStack();
+    }
+
     #[Test]
     #[DataProvider('client_sends_bearer_token_provider')]
     public function client_sends_bearer_token(string $bearer_token): void
     {
+        // Arrange
         $responseDefinition = new Status();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($bearer_token, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $bearer_token,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $status = $client->status();
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $status);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $bearer_token,
             $this->defaultBaseUri,
         );
@@ -107,35 +100,19 @@ class HaRestApiClientTest extends TestCase
         string $base_uri,
         string $expected_url
     ): void {
+        // Arrange
         $responseDefinition = new Status();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $base_uri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $base_uri,
-            $handlerStack
-        );
-
+        // Act
         $status = $client->status();
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $status);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $expected_url
         );
@@ -157,38 +134,23 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_handles_unauthorized_response(): void
     {
+        // Arrange
         $responseDefinition = new Auth();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         try {
             $client->status();
             $this->fail();
         } catch (HaException $haException) {
-
+            // Expect this exception - do nothing
         }
 
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
+        // Assert
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri,
         );
@@ -197,37 +159,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_status(): void
     {
+        // Arrange
         $responseDefinition = new Status();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            'bearerToken',
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $status = $client->status();
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $status);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri
         );
@@ -236,37 +180,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_config(): void
     {
+        // Arrange
         $responseDefinition = new Config();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $config = $client->config();
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $config);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'config'
         );
@@ -275,37 +201,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_events(): void
     {
+        // Arrange
         $responseDefinition = new Events();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $events = $client->events();
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $events);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'events'
         );
@@ -314,37 +222,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_services(): void
     {
+        // Arrange
         $responseDefinition = new Services();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $services = $client->services();
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $services);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services'
         );
@@ -364,24 +254,13 @@ class HaRestApiClientTest extends TestCase
         ?DateTimeInterface $start_time = null,
         ?DateTimeInterface $end_time = null,
     ): void {
+        // Arrange
         $responseDefinition = new History();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         try {
             $history = $client->history(
                 $entity_ids,
@@ -401,21 +280,16 @@ class HaRestApiClientTest extends TestCase
             $this->assertSame($expected_error_message, $haException->getMessage());
         }
 
+        // Assert
         if ($expect_request_sent) {
-            $this->assertCount(1, $historyContainer);
             $this->assertSame($responseDefinition->getBodyAsArray(), $history);
-            /** @var Request $request */
-            $request = $historyContainer[0]['request'];
-
-            $this->assertSame('GET', $request->getMethod());
-
             $this->performCommonGuzzleRequestAssertions(
-                $request,
+                'GET',
                 $this->defaultBearerToken,
                 $this->defaultBaseUri . $expected_url
             );
         } else {
-            $this->assertCount(0, $historyContainer);
+            $this->assertCount(0, $this->historyContainer);
         }
     }
 
@@ -508,39 +382,23 @@ class HaRestApiClientTest extends TestCase
         ?DateTimeInterface $end_time = null,
         ?string            $entity_id = null,
     ): void {
+        // Arrange
         $responseDefinition = new Logbook();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $logbook = $client->logbook(
             $entity_id,
             $start_time,
             $end_time,
         );
 
-        $this->assertCount(1, $historyContainer);
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $logbook);
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . $expected_url
         );
@@ -587,35 +445,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_states(): void
     {
+        // Arrange
         $responseDefinition = new States();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $states = $client->states();
 
-        $this->assertCount(1, $historyContainer);
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $states);
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'states'
         );
@@ -628,22 +470,12 @@ class HaRestApiClientTest extends TestCase
         bool               $expect_error,
         ?string            $expected_error_message = null,
     ): void {
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        // Arrange
+        $this->mockHandler->append($response_definition->getResponse());
 
-        $mockHandlerHandler = new MockHandler([
-            $response_definition->getResponse()
-        ]);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         try {
             $state = $client->state('light.bedroom_ceiling');
             if ($expect_error) {
@@ -657,15 +489,9 @@ class HaRestApiClientTest extends TestCase
             $this->assertSame($expected_error_message, $haException->getMessage());
         }
 
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
+        // Assert
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . "states/light.bedroom_ceiling"
         );
@@ -690,35 +516,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_error_log(): void
     {
+        // Arrange
         $responseDefinition = new ErrorLog();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $errorLog = $client->errorLog();
 
-        $this->assertCount(1, $historyContainer);
+        // Assert
         $this->assertSame(['response' => $responseDefinition->bodyContent], $errorLog);
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'error_log'
         );
@@ -727,35 +537,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_calendars(): void
     {
+        // Arrange
         $responseDefinition = new Calendars();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $calendars = $client->calendars();
 
-        $this->assertCount(1, $historyContainer);
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $calendars);
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'calendars'
         );
@@ -764,39 +558,23 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_get_calendar_events(): void
     {
+        // Arrange
         $responseDefinition = new CalendarEvents();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $calendarEvents = $client->calendarEvents(
             'calendar.birthdays',
             new DateTime('2024-02-10 00:00:00'),
             new DateTime('2024-02-20 23:59:59'),
         );
 
-        $this->assertCount(1, $historyContainer);
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $calendarEvents);
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('GET', $request->getMethod());
-
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'calendars/calendar.birthdays?start=2024-02-10T12%3A02%3A00%2B00%3A00&end=2024-02-20T11%3A02%3A59%2B00%3A00'
         );
@@ -806,23 +584,12 @@ class HaRestApiClientTest extends TestCase
     #[DataProvider('client_can_update_state_provider')]
     public function client_can_update_state(ResponseDefinition $response_definition): void
     {
-        // Setup Handler stack.
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
-        $mockHandler = new MockHandler([
-            $response_definition->getResponse()
-        ]);
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
+        // Arrange
+        $this->mockHandler->append($response_definition->getResponse());
 
-        // Create client.
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        // Call method.
+        // Act
         $payload = [
             'state'      => $state = 'on',
             'attributes' => $attributes = [
@@ -838,23 +605,14 @@ class HaRestApiClientTest extends TestCase
             $attributes
         );
 
-        // Assert client returns correct data.
+        // Assert
         $this->assertSame($response_definition->getBodyAsArray(), $updateState);
-
-        // Assert request sent correctly.
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
-
-        $this->performCommonGuzzleRequestAssertions(
-            $request,
+        $request = $this->performCommonGuzzleRequestAssertions(
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . "states/{$entityId}"
         );
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
     }
 
     public static function client_can_update_state_provider(): Generator
@@ -875,45 +633,25 @@ class HaRestApiClientTest extends TestCase
         string             $event_type,
         ?array             $event_data = null
     ): void {
-        // Setup Handler stack.
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
-        $mockHandler = new MockHandler([
-            $response_definition->getResponse()
-        ]);
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
+        // Arrange
+        $this->mockHandler->append($response_definition->getResponse());
 
-        // Create client.
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        // Call method.
+        // Act
         $fireEvent = $client->fireEvent(
             $event_type,
             $event_data
         );
 
-        // Assert client returns correct data.
+        // Assert
         $this->assertSame($response_definition->getBodyAsArray(), $fireEvent);
-
-        // Assert request sent correctly.
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame($event_data, json_decode($request->getBody()->getContents(), true));
-
-        $this->performCommonGuzzleRequestAssertions(
-            $request,
+        $request = $this->performCommonGuzzleRequestAssertions(
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . "events/{$event_type}"
         );
+        $this->assertSame($event_data, json_decode($request->getBody()->getContents(), true));
     }
 
     public static function client_can_fire_event_provider(): Generator
@@ -943,89 +681,53 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_call_service(): void
     {
+        // Arrange
         $responseDefinition = new CallService();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandler = new MockHandler([
-            $responseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack,
-        );
-
+        // Act
         $payload = [
             'entity_id' => 'light.bedroom_ceiling'
         ];
-
         $response = $client->callService('light', 'turn_on', $payload);
 
+        // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $response);
-
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
-
-        $this->performCommonGuzzleRequestAssertions(
-            $request,
+        $request = $this->performCommonGuzzleRequestAssertions(
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services/light/turn_on'
         );
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
     }
 
     #[Test]
     #[DataProvider('call_service_handles_error_provider')]
     public function call_service_handles_error(ResponseDefinition $response_definition, string $expected_exception_message): void
     {
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        // Arrange
+        $this->mockHandler->append($response_definition->getResponse());
 
-        $mockHandler = new MockHandler([
-            $response_definition->getResponse()
-        ]);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push($historyMiddleware);
-
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $payload = [];
-
         try {
-            $response = $client->callService('light', 'turn_on', $payload);
+            $client->callService('light', 'turn_on', $payload);
             $this->fail();
         } catch (HaException $haException) {
             $this->assertSame($expected_exception_message, $haException->getMessage());
         }
 
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
-
-        $this->performCommonGuzzleRequestAssertions(
-            $request,
+        // Assert
+        $request = $this->performCommonGuzzleRequestAssertions(
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services/light/turn_on'
         );
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
     }
 
     public static function call_service_handles_error_provider(): Generator
@@ -1054,35 +756,19 @@ class HaRestApiClientTest extends TestCase
         bool               $expect_error,
         ?string            $expected_error_message = null,
     ): void {
-        // Setup Handler stack.
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        // Arrange
+        $this->mockHandler->append($response_definition->getResponse());
 
-        $mockHandlerHandler = new MockHandler([
-            $response_definition->getResponse(),
-        ]);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        // Create client.
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
-        // Call method.
+        // Act
         try {
-
             $renderedTemplate = $client->renderTemplate($template);
             if ($expect_error) {
                 $this->fail('Should have failed.');
             }
 
-            // Assert client returns correct data.
             $this->assertSame(['response' => $response_definition->bodyContent], $renderedTemplate);
-
         } catch (HaException $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
@@ -1090,20 +776,13 @@ class HaRestApiClientTest extends TestCase
             $this->assertSame($expected_error_message, $haException->getMessage());
         }
 
-        // Assert request sent correctly.
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame(['template' => $template], json_decode($request->getBody()->getContents(), true));
-
-        $this->performCommonGuzzleRequestAssertions(
-            $request,
+        // Assert
+        $request = $this->performCommonGuzzleRequestAssertions(
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'template'
         );
+        $this->assertSame(['template' => $template], json_decode($request->getBody()->getContents(), true));
     }
 
     public static function client_can_render_template_provider(): Generator
@@ -1126,42 +805,19 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_can_check_config(): void
     {
-        $checkConfigResponseDefinition = new CheckConfig();
+        // Arrange
+        $responseDefinition = new CheckConfig();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        // Setup Handler stack.
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $mockHandlerHandler = new MockHandler([
-            $checkConfigResponseDefinition->getResponse()
-        ]);
-
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        // Create client.
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
-        // Call method.
+        // Act
         $checkConfig = $client->checkConfig();
 
-        // Assert client returns correct data.
-        $this->assertSame($checkConfigResponseDefinition->getBodyAsArray(), $checkConfig);
-
-        // Assert request sent correctly.
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-
+        // Assert
+        $this->assertSame($responseDefinition->getBodyAsArray(), $checkConfig);
         $this->performCommonGuzzleRequestAssertions(
-            $request,
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'config/core/check_config'
         );
@@ -1174,25 +830,12 @@ class HaRestApiClientTest extends TestCase
         bool               $expect_error,
         ?string            $expected_error_message = null,
     ): void {
-        // Setup Handler stack.
-        $historyContainer = [];
-        $historyMiddleware = Middleware::history($historyContainer);
+        // Arrange
+        $this->mockHandler->append($response_definition->getResponse());
 
-        $mockHandlerHandler = new MockHandler([
-            $response_definition->getResponse(),
-        ]);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $handlerStack = HandlerStack::create($mockHandlerHandler);
-        $handlerStack->push($historyMiddleware);
-
-        // Create client.
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
-        // Call method.
+        // Act
         try {
             $payload = [
                 'name' => 'SetTimer',
@@ -1206,9 +849,7 @@ class HaRestApiClientTest extends TestCase
                 $this->fail('Should have failed.');
             }
 
-            // Assert client returns correct data.
             $this->assertSame($response_definition->getBodyAsArray(), $handleIntent);
-
         } catch (HaException $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
@@ -1216,20 +857,13 @@ class HaRestApiClientTest extends TestCase
             $this->assertSame($expected_error_message, $haException->getMessage());
         }
 
-        // Assert request sent correctly.
-        $this->assertCount(1, $historyContainer);
-
-        /** @var Request $request */
-        $request = $historyContainer[0]['request'];
-
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
-
-        $this->performCommonGuzzleRequestAssertions(
-            $request,
+        // Assert
+        $request = $this->performCommonGuzzleRequestAssertions(
+            'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'intent/handle'
         );
+        $this->assertSame($payload, json_decode($request->getBody()->getContents(), true));
     }
 
     public static function client_can_handle_intent_provider(): Generator
@@ -1250,20 +884,16 @@ class HaRestApiClientTest extends TestCase
     #[Test]
     public function client_wraps_response_in_array_if_needed(): void
     {
-        $mockHandler = new MockHandler([
-            (new NullJson())->getResponse()
-        ]);
+        // Arrange
+        $responseDefinition = new NullJson();
+        $this->mockHandler->append($responseDefinition->getResponse());
 
-        $handlerStack = HandlerStack::create($mockHandler);
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
-        $client = new HaRestApiClient(
-            $this->defaultBearerToken,
-            $this->defaultBaseUri,
-            $handlerStack
-        );
-
+        // Act
         $response = $client->status();
 
+        // Assert
         $this->assertSame([null], $response);
     }
 
@@ -1272,11 +902,39 @@ class HaRestApiClientTest extends TestCase
      * Helpers
      * ---------------------------------------------------------------------------------
      */
+    public function setupHandlerStack(): void
+    {
+        $this->historyContainer = [];
+        $historyMiddleware = Middleware::history($this->historyContainer);
+
+        $this->mockHandler = new MockHandler([]);
+
+        $this->handlerStack = HandlerStack::create($this->mockHandler);
+        $this->handlerStack->push($historyMiddleware);
+    }
+
+    private function createClient(string $bearerToken, string $baseUri): HaRestApiClient
+    {
+        return new HaRestApiClient(
+            $bearerToken,
+            $baseUri,
+            $this->handlerStack
+        );
+    }
+
     private function performCommonGuzzleRequestAssertions(
-        Request $request,
-        string  $bearerToken,
-        string  $url
-    ) {
+        string $method,
+        string $bearerToken,
+        string $url
+    ): Request {
+        // Assert a request was sent.
+        $this->assertCount(1, $this->historyContainer);
+
+        $request = $this->getSentRequest();
+
+        // Assert request method
+        $this->assertSame($method, $request->getMethod());
+
         // Headers - Authorization
         $this->assertTrue($request->hasHeader('Authorization'));
         $this->assertSame("Bearer {$bearerToken}", $request->getHeader('Authorization')[0]);
@@ -1286,5 +944,12 @@ class HaRestApiClientTest extends TestCase
 
         // Uri
         $this->assertSame($url, $request->getUri()->__toString());
+
+        return $request;
+    }
+
+    private function getSentRequest(): Request
+    {
+        return $this->historyContainer[0]['request'];
     }
 }
