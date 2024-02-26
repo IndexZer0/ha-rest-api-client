@@ -19,6 +19,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "php-http/client-common": "^2.4",
         "php-http/discovery": "^1.19",
         "php-http/httplug": "^2.4"
     },
