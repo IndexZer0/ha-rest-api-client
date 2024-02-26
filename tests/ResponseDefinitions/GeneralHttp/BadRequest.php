@@ -13,10 +13,8 @@ readonly class BadRequest extends ResponseDefinition
         parent::__construct(
             400,
             'text/plain; charset=utf-8',
-            "500 Internal Server Error
-
-Server got itself in trouble",
-            'Internal Server Error'
+            "400: Bad Request",
+            'Bad Request'
         );
     }
 }
