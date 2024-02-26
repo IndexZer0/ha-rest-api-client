@@ -93,8 +93,7 @@ class HaRestApiClient
         bool               $minimalResponse = false,
         bool               $noAttributes = false,
         bool               $significantChangesOnly = false,
-    ): array
-    {
+    ): array {
         if (count($entityIds) < 1) {
             throw new HaException('Provide at least one entity id.');
         }
@@ -115,7 +114,7 @@ class HaRestApiClient
             'minimal_response'         => $minimalResponse,
             'no_attributes'            => $noAttributes,
             'significant_changes_only' => $significantChangesOnly,
-        ], fn($value) => $value);
+        ], fn ($value) => $value);
 
         $queryParams = [
             'filter_entity_id' => join(',', $entityIds),
@@ -138,8 +137,7 @@ class HaRestApiClient
         ?string            $entityId = null,
         ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
-    ): array
-    {
+    ): array {
         $path = "/logbook";
 
         if ($startTime !== null) {
@@ -225,8 +223,7 @@ class HaRestApiClient
         string            $entityId,
         DateTimeInterface $start,
         DateTimeInterface $end,
-    ): array
-    {
+    ): array {
         return $this->handleRequest(
             $this->createRequestWithQuery('GET', "/calendars/{$entityId}", [
                 'start' => $start->format(self::$dateFormat),
@@ -242,8 +239,7 @@ class HaRestApiClient
         string $entityId,
         string $state,
         ?array $attributes
-    ): array
-    {
+    ): array {
         $data = ['state' => $state,];
 
         if ($attributes !== null) {
@@ -265,8 +261,7 @@ class HaRestApiClient
     public function fireEvent(
         string $eventType,
         ?array $eventData = null
-    ): array
-    {
+    ): array {
         return $this->handleRequest(
             $this->httpClientBuilder->getRequestFactory()->createRequest('POST', "/events/{$eventType}")->withBody(
                 $this->httpClientBuilder->getStreamFactory()->createStream(json_encode($eventData))
