@@ -6,8 +6,7 @@
         "ha-rest-api-client",
         "Home Assistant",
         "Smart Tech",
-        "Rest API",
-        "Guzzle"
+        "Rest API"
     ],
     "homepage": "https://github.com/indexzer0/ha-rest-api-client",
     "license": "MIT",
@@ -20,10 +19,12 @@
     ],
     "require": {
         "php": "^8.2",
-        "php-http/discovery": "^1.19"
+        "php-http/discovery": "^1.19",
+        "php-http/httplug": "^2.4"
     },
     "require-dev": {
         "guzzlehttp/guzzle": "^7.8",
+        "guzzlehttp/psr7": "^2.0",
         "laravel/pint": "^1.0",
         "php-http/mock-client": "^1.6",
         "phpunit/phpunit": "^11.0",
