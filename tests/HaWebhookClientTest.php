@@ -30,20 +30,17 @@ class HaWebhookClientTest extends TestCase
     public function client_can_send_webhook(
         bool    $expect_error,
         ?string $expected_exception_message,
-
         bool    $expect_request_sent,
         bool    $expect_content_type_header,
         ?string $expected_content_type_header_value,
         ?string $expected_uri,
         ?string $expected_request_body,
-
         string  $method,
         string  $webhook_id,
         ?array  $query_params,
         ?string $payload_type,
         ?array  $data,
-    ): void
-    {
+    ): void {
         // Arrange
         $responseDefinition = new WebhookSuccess();
         $this->mockClient->addResponse($responseDefinition->getResponse());
