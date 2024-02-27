@@ -12,6 +12,7 @@ use Http\Client\Common\Plugin\HeaderDefaultsPlugin;
 use Http\Message\Authentication\Bearer;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
+use SensitiveParameter;
 
 class HaRestApiClient
 {
@@ -20,6 +21,7 @@ class HaRestApiClient
     private static string $dateFormat = 'Y-m-d\Th:m:sP';
 
     public function __construct(
+        #[SensitiveParameter]
         private string          $bearerToken,
         private string          $baseUri,
         public readonly Builder $httpClientBuilder = new Builder(),
