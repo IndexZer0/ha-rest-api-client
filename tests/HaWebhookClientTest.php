@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient\Tests;
 
 use Generator;
+use Http\Client\Common\Plugin\BaseUriPlugin;
 use Http\Mock\Client;
 use IndexZer0\HaRestApiClient\HaException;
 use IndexZer0\HaRestApiClient\HaWebhookClient;
@@ -247,6 +248,48 @@ class HaWebhookClientTest extends TestCase
             'query_params' => $queryParams,
             'payload_type' => 'form_params',
             'data'         => ['json_one' => 1, 'json_two' => 2],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('consumer_can_alter_plugins_provider')]
+    public function consumer_can_alter_plugins(
+        ?string $plugin_to_remove,
+        string  $expected_request_uri,
+    ): void {
+        // Arrange
+        $responseDefinition = new WebhookSuccess();
+        $this->mockClient->addResponse($responseDefinition->getResponse());
+
+        $client = $this->createClient($this->defaultBaseUri);
+
+        if ($plugin_to_remove !== null) {
+            $client->httpClientBuilder->removePlugin($plugin_to_remove);
+        }
+
+        // Act
+        $client->send(
+            'GET',
+            'webhook_id',
+        );
+
+        $this->assertCount(1, $this->mockClient->getRequests());
+
+        $request = $this->mockClient->getLastRequest();
+
+        $this->assertSame($expected_request_uri, $request->getUri()->__toString());
+    }
+
+    public static function consumer_can_alter_plugins_provider(): Generator
+    {
+        yield 'expect_success | don\'t remove plugin' => [
+            'plugin_to_remove'     => null,
+            'expected_request_uri' => 'http://localhost:8123/api/webhook/webhook_id',
+        ];
+
+        yield 'expect_error | remove BaseUriPlugin plugin' => [
+            'plugin_to_remove'     => BaseUriPlugin::class,
+            'expected_request_uri' => '/webhook/webhook_id',
         ];
     }
 
