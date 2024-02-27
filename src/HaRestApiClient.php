@@ -5,20 +5,18 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient;
 
 use DateTimeInterface;
-use Http\Client\Common\Exception\ClientErrorException;
 use Http\Client\Common\Plugin\AuthenticationPlugin;
 use Http\Client\Common\Plugin\BaseUriPlugin;
 use Http\Client\Common\Plugin\ErrorPlugin;
 use Http\Client\Common\Plugin\HeaderDefaultsPlugin;
 use Http\Message\Authentication\Bearer;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
-use JsonException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Throwable;
+use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
 
 class HaRestApiClient
 {
+    use HandlesRequests;
+
     private static string $dateFormat = 'Y-m-d\Th:m:sP';
 
     public function __construct(
@@ -316,69 +314,6 @@ class HaRestApiClient
             $this->httpClientBuilder->getRequestFactory()->createRequest('POST', '/intent/handle')->withBody(
                 $this->httpClientBuilder->getStreamFactory()->createStream(json_encode($data))
             )
-        );
-    }
-
-    /**
-     * ---------------------------------------------------------------------------------
-     * Helpers
-     * ---------------------------------------------------------------------------------
-     */
-
-    /*
-     * Send request and handle responses.
-     */
-    private function handleRequest(RequestInterface $request): array
-    {
-        try {
-            $response = $this->httpClientBuilder->getHttpClient()->sendRequest($request);
-        } catch (ClientErrorException $ce) {
-            throw new HaException($ce->getResponse()->getBody()->getContents(), previous: $ce);
-        } catch (Throwable $t) {
-            throw new HaException('Unknown Error.', previous: $t);
-        }
-
-        $responseBodyContent = $response->getBody()->getContents();
-
-        $responseContentType = $this->getContentTypeFromResponse($response) ?? 'application/json';
-
-        if ($responseContentType === 'application/json') {
-            try {
-                $json = json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
-
-                // This is a failsafe for if the home assistant json response is not an array when decoded
-                // For example if $responseBodyContent = 'null';
-                // Not seen this scenario in the wild but handling this json decode case anyway.
-                if (!is_array($json)) {
-                    return [$json];
-                }
-
-                return $json;
-            } catch (JsonException $je) {
-                // This should never happen.
-                // If it does, it means home assistant is returning invalid json with application/json Content-Type header.
-                throw new HaException('Invalid JSON Response.', previous: $je);
-            }
-        }
-
-        // Some responses come back with Content-Type header of text/plain.
-        // Such as errorLog and renderTemplate.
-        // So lets just wrap in an array to satisfy return type and keep api consistent.
-        return [
-            'response' => $responseBodyContent
-        ];
-    }
-
-    private function getContentTypeFromResponse(ResponseInterface $response): ?string
-    {
-        return $response->hasHeader('Content-Type') ? $response->getHeader('Content-Type')[0] : null;
-    }
-
-    private function createRequestWithQuery(string $method, $uri, array $query): RequestInterface
-    {
-        $request = $this->httpClientBuilder->getRequestFactory()->createRequest($method, $uri);
-        return $request->withUri(
-            $request->getUri()->withQuery(http_build_query($query))
         );
     }
 }
