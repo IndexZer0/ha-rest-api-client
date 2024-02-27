@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/IndexZer0/ha-rest-api-client/graph/badge.svg?token=JMF8UG8S4Y)](https://codecov.io/gh/IndexZer0/ha-rest-api-client)
 [![Total Downloads](https://img.shields.io/packagist/dt/indexzer0/ha-rest-api-client.svg?style=flat-square)](https://packagist.org/packages/indexzer0/ha-rest-api-client)
 
-Simple client for accessing HomeAssistant Rest API.
+Clients for accessing HomeAssistant Rest API & Webhooks.
 
 ## Requirements
 
