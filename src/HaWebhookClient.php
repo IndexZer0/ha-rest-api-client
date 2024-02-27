@@ -8,6 +8,7 @@ use Http\Client\Common\Plugin\BaseUriPlugin;
 use Http\Client\Common\Plugin\ErrorPlugin;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
+use SensitiveParameter;
 
 class HaWebhookClient
 {
@@ -63,6 +64,7 @@ class HaWebhookClient
      */
     public function send(
         string  $method,
+        #[SensitiveParameter]
         string  $webhookId,
         ?array  $queryParams = null,
         ?string $payloadType = null,
