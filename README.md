@@ -189,6 +189,10 @@ $webhookClient->send(
 composer test
 ```
 
+## Changelog
+
+Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+
 ## Contributing
 
 - Currently accepting PR for```$client->camera();``` as I don't have a camera entity to develop against.
