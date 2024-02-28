@@ -5,43 +5,44 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient;
 
 use DateTimeInterface;
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\RequestOptions;
-use JsonException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use Http\Client\Common\Plugin\AuthenticationPlugin;
+use Http\Client\Common\Plugin\BaseUriPlugin;
+use Http\Client\Common\Plugin\HeaderDefaultsPlugin;
+use Http\Message\Authentication\Bearer;
+use IndexZer0\HaRestApiClient\Exception\HaException;
+use IndexZer0\HaRestApiClient\Exception\InvalidArgumentException;
+use IndexZer0\HaRestApiClient\HttpClient\Builder;
+use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
+use SensitiveParameter;
 use Throwable;
 
 class HaRestApiClient
 {
-    public readonly GuzzleClient $guzzleClient;
+    use HandlesRequests;
 
     private static string $dateFormat = 'Y-m-d\Th:m:sP';
 
     public function __construct(
-        private string        $bearerToken,
-        private string        $baseUri,
-        private ?HandlerStack $handlerStack = null
+        #[SensitiveParameter]
+        private string          $bearerToken,
+        private string          $baseUri,
+        public readonly Builder $httpClientBuilder = new Builder(),
     ) {
-        $this->initGuzzleClient();
-    }
-
-    /*
-     * Init guzzle client.
-     */
-    protected function initGuzzleClient(): void
-    {
-        $this->guzzleClient = new GuzzleClient([
-            'base_uri' => $this->baseUri,
-            'headers'  => [
-                'Authorization' => "Bearer {$this->bearerToken}",
-                'Content-Type'  => 'application/json',
-            ],
-            'handler'  => $this->handlerStack
-        ]);
+        try {
+            $this->httpClientBuilder->addPlugin(new AuthenticationPlugin(new Bearer($this->bearerToken)));
+            $this->httpClientBuilder->addPlugin(new HeaderDefaultsPlugin([
+                'Content-Type' => 'application/json',
+            ]));
+            $this->httpClientBuilder->addPlugin(new BaseUriPlugin(
+                $this->httpClientBuilder->getUriFactory()->createUri($this->baseUri),
+                [
+                    // Always replace the host, even if this one is provided on the sent request. Available for AddHostPlugin.
+                    'replace' => true,
+                ]
+            ));
+        } catch (Throwable $t) {
+            throw new HaException($t->getMessage(), $t->getCode(), $t);
+        }
     }
 
     /*
@@ -49,7 +50,9 @@ class HaRestApiClient
      */
     public function status(): array
     {
-        return $this->handleRequest(new Request('GET', ''));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/')
+        );
     }
 
     /*
@@ -57,7 +60,9 @@ class HaRestApiClient
      */
     public function config(): array
     {
-        return $this->handleRequest(new Request('GET', 'config'));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/config')
+        );
     }
 
     /*
@@ -66,7 +71,9 @@ class HaRestApiClient
      */
     public function events(): array
     {
-        return $this->handleRequest(new Request('GET', 'events'));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/events')
+        );
     }
 
     /**
@@ -75,7 +82,9 @@ class HaRestApiClient
      */
     public function services(): array
     {
-        return $this->handleRequest(new Request('GET', 'services'));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/services')
+        );
     }
 
     /*
@@ -91,16 +100,16 @@ class HaRestApiClient
         bool               $significantChangesOnly = false,
     ): array {
         if (count($entityIds) < 1) {
-            throw new HaException('Provide at least one entity id.');
+            throw new InvalidArgumentException('Provide at least one entity id.');
         }
 
         foreach ($entityIds as $entityId) {
             if (!is_string($entityId)) {
-                throw new HaException('Entity id must be string.');
+                throw new InvalidArgumentException('Entity id must be string.');
             }
         }
 
-        $path = "history/period";
+        $path = "/history/period";
 
         if ($startTime !== null) {
             $path .= '/' . $startTime->format(self::$dateFormat);
@@ -121,9 +130,9 @@ class HaRestApiClient
             $queryParams['end_time'] = $endTime->format(self::$dateFormat);
         }
 
-        return $this->handleRequest(new Request('GET', $path), [
-            'query' => $queryParams
-        ]);
+        return $this->handleRequest(
+            $this->createRequestWithQuery('GET', $path, $queryParams)
+        );
     }
 
     /*
@@ -134,7 +143,7 @@ class HaRestApiClient
         ?DateTimeInterface $startTime = null,
         ?DateTimeInterface $endTime = null,
     ): array {
-        $path = "logbook";
+        $path = "/logbook";
 
         if ($startTime !== null) {
             $path .= '/' . $startTime->format(self::$dateFormat);
@@ -150,9 +159,9 @@ class HaRestApiClient
             $queryParams['end_time'] = $endTime->format(self::$dateFormat);
         }
 
-        return $this->handleRequest(new Request('GET', $path), [
-            'query' => $queryParams
-        ]);
+        return $this->handleRequest(
+            $this->createRequestWithQuery('GET', $path, $queryParams)
+        );
     }
 
     /*
@@ -161,7 +170,9 @@ class HaRestApiClient
      */
     public function states(): array
     {
-        return $this->handleRequest(new Request('GET', 'states'));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/states')
+        );
     }
 
     /*
@@ -170,7 +181,9 @@ class HaRestApiClient
      */
     public function state(string $entityId): array
     {
-        return $this->handleRequest(new Request('GET', "states/{$entityId}"));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', "/states/{$entityId}")
+        );
     }
 
     /*
@@ -178,7 +191,9 @@ class HaRestApiClient
      */
     public function errorLog(): array
     {
-        return $this->handleRequest(new Request('GET', "error_log"));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/error_log')
+        );
     }
 
     /*
@@ -191,7 +206,9 @@ class HaRestApiClient
 
         // TODO get param (time).
 
-        return $this->handleRequest(new Request('GET', "camera_proxy/{$entityId}"));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', "/camera_proxy/{$entityId}")
+        );
     }*/
 
     /*
@@ -199,7 +216,9 @@ class HaRestApiClient
      */
     public function calendars(): array
     {
-        return $this->handleRequest(new Request('GET', "calendars"));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('GET', '/calendars')
+        );
     }
 
     /*
@@ -210,12 +229,12 @@ class HaRestApiClient
         DateTimeInterface $start,
         DateTimeInterface $end,
     ): array {
-        return $this->handleRequest(new Request('GET', "calendars/{$entityId}"), [
-            'query' => [
+        return $this->handleRequest(
+            $this->createRequestWithQuery('GET', "/calendars/{$entityId}", [
                 'start' => $start->format(self::$dateFormat),
                 'end'   => $end->format(self::$dateFormat)
-            ]
-        ]);
+            ])
+        );
     }
 
     /*
@@ -232,9 +251,11 @@ class HaRestApiClient
             $data['attributes'] = $attributes;
         }
 
-        return $this->handleRequest(new Request('POST', "states/{$entityId}"), [
-            RequestOptions::JSON => $data,
-        ]);
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('POST', "/states/{$entityId}")->withBody(
+                $this->httpClientBuilder->getStreamFactory()->createStream(json_encode($data))
+            )
+        );
     }
 
     /*
@@ -246,9 +267,11 @@ class HaRestApiClient
         string $eventType,
         ?array $eventData = null
     ): array {
-        return $this->handleRequest(new Request('POST', "events/{$eventType}"), [
-            RequestOptions::JSON => $eventData,
-        ]);
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('POST', "/events/{$eventType}")->withBody(
+                $this->httpClientBuilder->getStreamFactory()->createStream(json_encode($eventData))
+            )
+        );
     }
 
     /*
@@ -256,9 +279,11 @@ class HaRestApiClient
      */
     public function callService(string $domain, string $service, array $data): array
     {
-        return $this->handleRequest(new Request('POST', "services/{$domain}/{$service}"), [
-            RequestOptions::JSON => $data,
-        ]);
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('POST', "/services/{$domain}/{$service}")->withBody(
+                $this->httpClientBuilder->getStreamFactory()->createStream(json_encode($data))
+            )
+        );
     }
 
     /*
@@ -268,9 +293,11 @@ class HaRestApiClient
      */
     public function renderTemplate(string $template): array
     {
-        return $this->handleRequest(new Request('POST', 'template'), [
-            RequestOptions::JSON => ['template' => $template],
-        ]);
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('POST', "/template")->withBody(
+                $this->httpClientBuilder->getStreamFactory()->createStream(json_encode(['template' => $template]))
+            )
+        );
     }
 
     /*
@@ -279,7 +306,9 @@ class HaRestApiClient
      */
     public function checkConfig(): array
     {
-        return $this->handleRequest(new Request('POST', 'config/core/check_config'));
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('POST', '/config/core/check_config')
+        );
     }
 
     /*
@@ -288,63 +317,10 @@ class HaRestApiClient
      */
     public function handleIntent(array $data): array
     {
-        return $this->handleRequest(new Request('POST', 'intent/handle'), [
-            RequestOptions::JSON => $data,
-        ]);
-    }
-
-    /**
-     * ---------------------------------------------------------------------------------
-     * Helpers
-     * ---------------------------------------------------------------------------------
-     */
-
-    /*
-     * Send request and handle responses.
-     */
-    private function handleRequest(RequestInterface $request, array $options = []): array
-    {
-        try {
-            $response = $this->guzzleClient->send($request, $options);
-        } catch (ClientException $ce) {
-            throw new HaException($ce->getResponse()->getBody()->getContents(), previous: $ce);
-        } catch (Throwable $t) {
-            throw new HaException('Unknown Error.', previous: $t);
-        }
-
-        $responseBodyContent = $response->getBody()->getContents();
-
-        $responseContentType = $this->getContentTypeFromResponse($response) ?? 'application/json';
-
-        if ($responseContentType === 'application/json') {
-            try {
-                $json = json_decode($responseBodyContent, true, flags: JSON_THROW_ON_ERROR);
-
-                // This is a failsafe for if the home assistant json response is not an array when decoded
-                // For example if $responseBodyContent = 'null';
-                // Not seen this scenario in the wild but handling this json decode case anyway.
-                if (!is_array($json)) {
-                    return [$json];
-                }
-
-                return $json;
-            } catch (JsonException $je) {
-                // This should never happen.
-                // If it does, it means home assistant is returning invalid json with application/json Content-Type header.
-                throw new HaException('Invalid JSON Response.', previous: $je);
-            }
-        }
-
-        // Some responses come back with Content-Type header of text/plain.
-        // Such as errorLog and renderTemplate.
-        // So lets just wrap in an array to satisfy return type and keep api consistent.
-        return [
-            'response' => $responseBodyContent
-        ];
-    }
-
-    private function getContentTypeFromResponse(ResponseInterface $response): ?string
-    {
-        return $response->hasHeader('Content-Type') ? $response->getHeader('Content-Type')[0] : null;
+        return $this->handleRequest(
+            $this->httpClientBuilder->getRequestFactory()->createRequest('POST', '/intent/handle')->withBody(
+                $this->httpClientBuilder->getStreamFactory()->createStream(json_encode($data))
+            )
+        );
     }
 }

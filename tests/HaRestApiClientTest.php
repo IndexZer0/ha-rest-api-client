@@ -10,9 +10,11 @@ use Generator;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
-use GuzzleHttp\Psr7\Request;
-use IndexZer0\HaRestApiClient\HaException;
+use Http\Client\Common\Exception\HttpClientNotFoundException;
+use Http\Mock\Client;
+use IndexZer0\HaRestApiClient\Exception\HaExceptionInterface;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
+use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\Auth;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\CalendarEvents\CalendarEvents;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Calendars\Calendars;
@@ -45,6 +47,8 @@ use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\UpdateState\UpdateStateU
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
 
 class HaRestApiClientTest extends TestCase
 {
@@ -52,13 +56,11 @@ class HaRestApiClientTest extends TestCase
 
     private string $defaultBaseUri = 'http://localhost:8123/api/';
 
-    private array $historyContainer = [];
-    private MockHandler $mockHandler;
-    private HandlerStack $handlerStack;
+    private Client $mockClient;
 
     public function setUp(): void
     {
-        $this->setupHandlerStack();
+        $this->mockClient = new Client();
     }
 
     #[Test]
@@ -67,7 +69,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new Status();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($bearer_token, $this->defaultBaseUri);
 
@@ -76,7 +78,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $status);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $bearer_token,
             $this->defaultBaseUri,
@@ -102,7 +104,7 @@ class HaRestApiClientTest extends TestCase
     ): void {
         // Arrange
         $responseDefinition = new Status();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $base_uri);
 
@@ -111,7 +113,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $status);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $expected_url
@@ -136,20 +138,20 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new Auth();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
         // Act
         try {
             $client->status();
-            $this->fail();
-        } catch (HaException $haException) {
-            // Expect this exception - do nothing
+            $this->fail('Should have failed');
+        } catch (HaExceptionInterface $haException) {
+            $this->assertSame($responseDefinition->bodyContent, $haException->getMessage());
         }
 
         // Assert
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri,
@@ -161,7 +163,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new Status();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -170,7 +172,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $status);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri
@@ -178,11 +180,48 @@ class HaRestApiClientTest extends TestCase
     }
 
     #[Test]
+    public function client_can_get_status_using_guzzle(): void
+    {
+        $historyContainer = [];
+        $historyMiddleware = Middleware::history($historyContainer);
+
+        $mockHandler = new MockHandler([]);
+
+        $handlerStack = HandlerStack::create($mockHandler);
+        $handlerStack->push($historyMiddleware);
+
+        // Arrange
+        $responseDefinition = new Status();
+        $mockHandler->append($responseDefinition->getResponse());
+
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri, new \GuzzleHttp\Client([
+            'handler' => $handlerStack,
+        ]));
+
+        // Act
+        $status = $client->status();
+
+        // Assert
+        $this->assertSame($responseDefinition->getBodyAsArray(), $status);
+        $this->performCommonRequestAssertionsGuzzle(
+            'GET',
+            $this->defaultBearerToken,
+            $this->defaultBaseUri,
+            $historyContainer,
+        );
+    }
+
+    public function setupHandlerStack(): void
+    {
+
+    }
+
+    #[Test]
     public function client_can_get_config(): void
     {
         // Arrange
         $responseDefinition = new Config();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -191,7 +230,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $config);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'config'
@@ -203,7 +242,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new Events();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -212,7 +251,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $events);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'events'
@@ -224,7 +263,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new Services();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -233,7 +272,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $services);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services'
@@ -256,7 +295,7 @@ class HaRestApiClientTest extends TestCase
     ): void {
         // Arrange
         $responseDefinition = new History();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -273,7 +312,7 @@ class HaRestApiClientTest extends TestCase
             if ($expect_error) {
                 $this->fail('Should have failed.');
             }
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -283,13 +322,13 @@ class HaRestApiClientTest extends TestCase
         // Assert
         if ($expect_request_sent) {
             $this->assertSame($responseDefinition->getBodyAsArray(), $history);
-            $this->performCommonGuzzleRequestAssertions(
+            $this->performCommonRequestAssertionsMockClient(
                 'GET',
                 $this->defaultBearerToken,
                 $this->defaultBaseUri . $expected_url
             );
         } else {
-            $this->assertCount(0, $this->historyContainer);
+            $this->assertCount(0, $this->mockClient->getRequests());
         }
     }
 
@@ -384,7 +423,7 @@ class HaRestApiClientTest extends TestCase
     ): void {
         // Arrange
         $responseDefinition = new Logbook();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -397,7 +436,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $logbook);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . $expected_url
@@ -447,7 +486,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new States();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -456,7 +495,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $states);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'states'
@@ -471,7 +510,8 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_error_message = null,
     ): void {
         // Arrange
-        $this->mockHandler->append($response_definition->getResponse());
+        //dd($response_definition->getResponse());
+        $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -482,7 +522,7 @@ class HaRestApiClientTest extends TestCase
                 $this->fail('Should have failed.');
             }
             $this->assertSame($response_definition->getBodyAsArray(), $state);
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -490,7 +530,7 @@ class HaRestApiClientTest extends TestCase
         }
 
         // Assert
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . "states/light.bedroom_ceiling"
@@ -518,7 +558,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new ErrorLog();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -527,7 +567,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame(['response' => $responseDefinition->bodyContent], $errorLog);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'error_log'
@@ -539,7 +579,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new Calendars();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -548,7 +588,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $calendars);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'calendars'
@@ -560,7 +600,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new CalendarEvents();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -573,7 +613,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $calendarEvents);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'GET',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'calendars/calendar.birthdays?start=2024-02-10T12%3A02%3A00%2B00%3A00&end=2024-02-20T11%3A02%3A59%2B00%3A00'
@@ -585,7 +625,7 @@ class HaRestApiClientTest extends TestCase
     public function client_can_update_state(ResponseDefinition $response_definition): void
     {
         // Arrange
-        $this->mockHandler->append($response_definition->getResponse());
+        $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -607,7 +647,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($response_definition->getBodyAsArray(), $updateState);
-        $request = $this->performCommonGuzzleRequestAssertions(
+        $request = $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . "states/{$entityId}"
@@ -634,7 +674,7 @@ class HaRestApiClientTest extends TestCase
         ?array             $event_data = null
     ): void {
         // Arrange
-        $this->mockHandler->append($response_definition->getResponse());
+        $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -646,7 +686,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($response_definition->getBodyAsArray(), $fireEvent);
-        $request = $this->performCommonGuzzleRequestAssertions(
+        $request = $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . "events/{$event_type}"
@@ -683,7 +723,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new CallService();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -695,7 +735,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $response);
-        $request = $this->performCommonGuzzleRequestAssertions(
+        $request = $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services/light/turn_on'
@@ -708,7 +748,7 @@ class HaRestApiClientTest extends TestCase
     public function call_service_handles_error(ResponseDefinition $response_definition, string $expected_exception_message): void
     {
         // Arrange
-        $this->mockHandler->append($response_definition->getResponse());
+        $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -716,13 +756,13 @@ class HaRestApiClientTest extends TestCase
         $payload = [];
         try {
             $client->callService('light', 'turn_on', $payload);
-            $this->fail();
-        } catch (HaException $haException) {
+            $this->fail('Should have failed');
+        } catch (HaExceptionInterface $haException) {
             $this->assertSame($expected_exception_message, $haException->getMessage());
         }
 
         // Assert
-        $request = $this->performCommonGuzzleRequestAssertions(
+        $request = $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'services/light/turn_on'
@@ -743,8 +783,8 @@ class HaRestApiClientTest extends TestCase
         ];
 
         yield 'server error' => [
-            'response_definition'        => new ServerError(),
-            'expected_exception_message' => 'Unknown Error.'
+            'response_definition'        => $serverError = new ServerError(),
+            'expected_exception_message' => $serverError->bodyContent
         ];
     }
 
@@ -757,7 +797,7 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_error_message = null,
     ): void {
         // Arrange
-        $this->mockHandler->append($response_definition->getResponse());
+        $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -769,7 +809,7 @@ class HaRestApiClientTest extends TestCase
             }
 
             $this->assertSame(['response' => $response_definition->bodyContent], $renderedTemplate);
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -777,7 +817,7 @@ class HaRestApiClientTest extends TestCase
         }
 
         // Assert
-        $request = $this->performCommonGuzzleRequestAssertions(
+        $request = $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'template'
@@ -807,7 +847,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new CheckConfig();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -816,7 +856,7 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame($responseDefinition->getBodyAsArray(), $checkConfig);
-        $this->performCommonGuzzleRequestAssertions(
+        $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'config/core/check_config'
@@ -831,7 +871,7 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_error_message = null,
     ): void {
         // Arrange
-        $this->mockHandler->append($response_definition->getResponse());
+        $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -850,7 +890,7 @@ class HaRestApiClientTest extends TestCase
             }
 
             $this->assertSame($response_definition->getBodyAsArray(), $handleIntent);
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -858,7 +898,7 @@ class HaRestApiClientTest extends TestCase
         }
 
         // Assert
-        $request = $this->performCommonGuzzleRequestAssertions(
+        $request = $this->performCommonRequestAssertionsMockClient(
             'POST',
             $this->defaultBearerToken,
             $this->defaultBaseUri . 'intent/handle'
@@ -875,9 +915,9 @@ class HaRestApiClientTest extends TestCase
         ];
 
         yield 'failure - bad request' => [
-            'response_definition'    => new HandleIntentFailServerError(),
+            'response_definition'    => $serverError = new HandleIntentFailServerError(),
             'expect_error'           => true,
-            'expected_error_message' => 'Unknown Error.',
+            'expected_error_message' => $serverError->bodyContent,
         ];
     }
 
@@ -886,7 +926,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $responseDefinition = new NullJson();
-        $this->mockHandler->append($responseDefinition->getResponse());
+        $this->mockClient->addResponse($responseDefinition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
@@ -897,41 +937,94 @@ class HaRestApiClientTest extends TestCase
         $this->assertSame([null], $response);
     }
 
+    #[Test]
+    public function client_handles_http_client_exceptions(): void
+    {
+        // Arrange
+        $message = 'Http Client Exception';
+        $this->mockClient->addException(new HttpClientNotFoundException($message));
+
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
+
+        // Act
+        try {
+            $client->status();
+            $this->fail('Should have failed.');
+        } catch (HaExceptionInterface $haException) {
+            $this->assertSame('Unknown Error.', $haException->getMessage());
+            $this->assertSame($message, $haException->getPrevious()->getMessage());
+        }
+    }
+
+    #[Test]
+    public function client_handles_invalid_construct_params(): void
+    {
+        // Act
+        try {
+            $this->createClient($this->defaultBearerToken, '');
+            $this->fail('Should have failed.');
+        } catch (HaExceptionInterface $haException) {
+            $this->assertSame('Host can not be empty', $haException->getMessage());
+            $this->assertSame('Host can not be empty', $haException->getPrevious()->getMessage());
+        }
+    }
+
     /**
      * ---------------------------------------------------------------------------------
      * Helpers
      * ---------------------------------------------------------------------------------
      */
-    public function setupHandlerStack(): void
-    {
-        $this->historyContainer = [];
-        $historyMiddleware = Middleware::history($this->historyContainer);
 
-        $this->mockHandler = new MockHandler([]);
-
-        $this->handlerStack = HandlerStack::create($this->mockHandler);
-        $this->handlerStack->push($historyMiddleware);
-    }
-
-    private function createClient(string $bearerToken, string $baseUri): HaRestApiClient
+    private function createClient(string $bearerToken, string $baseUri, ClientInterface $httpClient = null): HaRestApiClient
     {
         return new HaRestApiClient(
             $bearerToken,
             $baseUri,
-            $this->handlerStack
+            new Builder(
+                $httpClient ?? $this->mockClient
+            ),
         );
     }
 
-    private function performCommonGuzzleRequestAssertions(
+    private function performCommonRequestAssertionsMockClient(
         string $method,
         string $bearerToken,
         string $url
-    ): Request {
+    ): RequestInterface {
         // Assert a request was sent.
-        $this->assertCount(1, $this->historyContainer);
+        $this->assertCount(1, $this->mockClient->getRequests());
 
-        $request = $this->getSentRequest();
+        return $this->performCommonRequestAssertions(
+            $this->mockClient->getLastRequest(),
+            $method,
+            $bearerToken,
+            $url,
+        );
+    }
 
+    private function performCommonRequestAssertionsGuzzle(
+        string $method,
+        string $bearerToken,
+        string $url,
+        array $historyContainer,
+    ): RequestInterface {
+        // Assert a request was sent.
+        $this->assertCount(1, $historyContainer);
+
+        return $this->performCommonRequestAssertions(
+            $historyContainer[0]['request'],
+            $method,
+            $bearerToken,
+            $url,
+        );
+    }
+
+    private function performCommonRequestAssertions(
+        RequestInterface $request,
+        string $method,
+        string $bearerToken,
+        string $url
+    ): RequestInterface {
         // Assert request method
         $this->assertSame($method, $request->getMethod());
 
@@ -946,10 +1039,5 @@ class HaRestApiClientTest extends TestCase
         $this->assertSame($url, $request->getUri()->__toString());
 
         return $request;
-    }
-
-    private function getSentRequest(): Request
-    {
-        return $this->historyContainer[0]['request'];
     }
 }
