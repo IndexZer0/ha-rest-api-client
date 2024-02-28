@@ -6,5 +6,4 @@ namespace IndexZer0\HaRestApiClient\Exception;
 
 class HttpException extends HaException
 {
-
 }
