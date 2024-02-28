@@ -6,11 +6,11 @@ namespace IndexZer0\HaRestApiClient\Tests;
 
 use DateTime;
 use DateTimeInterface;
-use Exception;
 use Generator;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use Http\Client\Common\Exception\HttpClientNotFoundException;
 use Http\Mock\Client;
 use IndexZer0\HaRestApiClient\Exception\HaExceptionInterface;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
@@ -942,7 +942,7 @@ class HaRestApiClientTest extends TestCase
     {
         // Arrange
         $message = 'Http Client Exception';
-        $this->mockClient->addException(new Exception($message));
+        $this->mockClient->addException(new HttpClientNotFoundException($message));
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
 
