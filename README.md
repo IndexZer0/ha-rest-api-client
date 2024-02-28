@@ -183,6 +183,27 @@ $webhookClient->send(
 );
 ```
 
+### Error Handling
+
+All exceptions thrown by the package implement `\IndexZer0\HaRestApiClient\Exception\HaExceptionInterface`.
+
+How-ever it doesn't harm to also catch `\Throwable`.
+
+
+
+```php
+try {
+    $webhookClient = new \IndexZer0\HaRestApiClient\HaWebhookClient(
+        'http://localhost:8123/api/'
+    );
+    $response = $webhookClient->send('GET', 'webhook_id');
+} catch (\IndexZer0\HaRestApiClient\Exception\HaExceptionInterface $haException) {
+    
+} catch (\Throwable $t) {
+    // Shouldn't happen - but failsafe.
+}
+```
+
 ## Testing
 
 ```bash

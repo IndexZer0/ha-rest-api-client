@@ -956,6 +956,19 @@ class HaRestApiClientTest extends TestCase
         }
     }
 
+    #[Test]
+    public function client_handles_invalid_construct_params(): void
+    {
+        // Act
+        try {
+            $this->createClient($this->defaultBearerToken, '');
+            $this->fail('Should have failed.');
+        } catch (HaExceptionInterface $haException) {
+            $this->assertSame('Host can not be empty', $haException->getMessage());
+            $this->assertSame('Host can not be empty', $haException->getPrevious()->getMessage());
+        }
+    }
+
     /**
      * ---------------------------------------------------------------------------------
      * Helpers

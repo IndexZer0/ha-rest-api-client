@@ -9,10 +9,12 @@ use Http\Client\Common\Plugin\AuthenticationPlugin;
 use Http\Client\Common\Plugin\BaseUriPlugin;
 use Http\Client\Common\Plugin\HeaderDefaultsPlugin;
 use Http\Message\Authentication\Bearer;
+use IndexZer0\HaRestApiClient\Exception\HaException;
 use IndexZer0\HaRestApiClient\Exception\InvalidArgumentException;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
 use SensitiveParameter;
+use Throwable;
 
 class HaRestApiClient
 {
@@ -26,17 +28,21 @@ class HaRestApiClient
         private string          $baseUri,
         public readonly Builder $httpClientBuilder = new Builder(),
     ) {
-        $this->httpClientBuilder->addPlugin(new AuthenticationPlugin(new Bearer($this->bearerToken)));
-        $this->httpClientBuilder->addPlugin(new HeaderDefaultsPlugin([
-            'Content-Type' => 'application/json',
-        ]));
-        $this->httpClientBuilder->addPlugin(new BaseUriPlugin(
-            $this->httpClientBuilder->getUriFactory()->createUri($this->baseUri),
-            [
-                // Always replace the host, even if this one is provided on the sent request. Available for AddHostPlugin.
-                'replace' => true,
-            ]
-        ));
+        try {
+            $this->httpClientBuilder->addPlugin(new AuthenticationPlugin(new Bearer($this->bearerToken)));
+            $this->httpClientBuilder->addPlugin(new HeaderDefaultsPlugin([
+                'Content-Type' => 'application/json',
+            ]));
+            $this->httpClientBuilder->addPlugin(new BaseUriPlugin(
+                $this->httpClientBuilder->getUriFactory()->createUri($this->baseUri),
+                [
+                    // Always replace the host, even if this one is provided on the sent request. Available for AddHostPlugin.
+                    'replace' => true,
+                ]
+            ));
+        } catch (Throwable $t) {
+            throw new HaException($t->getMessage(), $t->getCode(), $t);
+        }
     }
 
     /*
