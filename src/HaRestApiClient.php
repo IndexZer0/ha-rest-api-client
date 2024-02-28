@@ -7,9 +7,9 @@ namespace IndexZer0\HaRestApiClient;
 use DateTimeInterface;
 use Http\Client\Common\Plugin\AuthenticationPlugin;
 use Http\Client\Common\Plugin\BaseUriPlugin;
-use Http\Client\Common\Plugin\ErrorPlugin;
 use Http\Client\Common\Plugin\HeaderDefaultsPlugin;
 use Http\Message\Authentication\Bearer;
+use IndexZer0\HaRestApiClient\Exception\InvalidArgumentException;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
 use SensitiveParameter;
@@ -37,7 +37,6 @@ class HaRestApiClient
                 'replace' => true,
             ]
         ));
-        $this->httpClientBuilder->addPlugin(new ErrorPlugin());
     }
 
     /*
@@ -95,12 +94,12 @@ class HaRestApiClient
         bool               $significantChangesOnly = false,
     ): array {
         if (count($entityIds) < 1) {
-            throw new HaException('Provide at least one entity id.');
+            throw new InvalidArgumentException('Provide at least one entity id.');
         }
 
         foreach ($entityIds as $entityId) {
             if (!is_string($entityId)) {
-                throw new HaException('Entity id must be string.');
+                throw new InvalidArgumentException('Entity id must be string.');
             }
         }
 

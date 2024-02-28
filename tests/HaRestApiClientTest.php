@@ -11,7 +11,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use Http\Mock\Client;
-use IndexZer0\HaRestApiClient\HaException;
+use IndexZer0\HaRestApiClient\Exception\HaExceptionInterface;
 use IndexZer0\HaRestApiClient\HaRestApiClient;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\GeneralHttp\Auth;
@@ -144,8 +144,8 @@ class HaRestApiClientTest extends TestCase
         // Act
         try {
             $client->status();
-            $this->fail();
-        } catch (HaException $haException) {
+            $this->fail('Should have failed');
+        } catch (HaExceptionInterface $haException) {
             $this->assertSame($responseDefinition->bodyContent, $haException->getMessage());
         }
 
@@ -311,7 +311,7 @@ class HaRestApiClientTest extends TestCase
             if ($expect_error) {
                 $this->fail('Should have failed.');
             }
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -509,6 +509,7 @@ class HaRestApiClientTest extends TestCase
         ?string            $expected_error_message = null,
     ): void {
         // Arrange
+        //dd($response_definition->getResponse());
         $this->mockClient->addResponse($response_definition->getResponse());
 
         $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
@@ -520,7 +521,7 @@ class HaRestApiClientTest extends TestCase
                 $this->fail('Should have failed.');
             }
             $this->assertSame($response_definition->getBodyAsArray(), $state);
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -754,8 +755,8 @@ class HaRestApiClientTest extends TestCase
         $payload = [];
         try {
             $client->callService('light', 'turn_on', $payload);
-            $this->fail();
-        } catch (HaException $haException) {
+            $this->fail('Should have failed');
+        } catch (HaExceptionInterface $haException) {
             $this->assertSame($expected_exception_message, $haException->getMessage());
         }
 
@@ -781,8 +782,8 @@ class HaRestApiClientTest extends TestCase
         ];
 
         yield 'server error' => [
-            'response_definition'        => new ServerError(),
-            'expected_exception_message' => 'Unknown Error.'
+            'response_definition'        => $serverError = new ServerError(),
+            'expected_exception_message' => $serverError->bodyContent
         ];
     }
 
@@ -807,7 +808,7 @@ class HaRestApiClientTest extends TestCase
             }
 
             $this->assertSame(['response' => $response_definition->bodyContent], $renderedTemplate);
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -888,7 +889,7 @@ class HaRestApiClientTest extends TestCase
             }
 
             $this->assertSame($response_definition->getBodyAsArray(), $handleIntent);
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
@@ -913,9 +914,9 @@ class HaRestApiClientTest extends TestCase
         ];
 
         yield 'failure - bad request' => [
-            'response_definition'    => new HandleIntentFailServerError(),
+            'response_definition'    => $serverError = new HandleIntentFailServerError(),
             'expect_error'           => true,
-            'expected_error_message' => 'Unknown Error.',
+            'expected_error_message' => $serverError->bodyContent,
         ];
     }
 

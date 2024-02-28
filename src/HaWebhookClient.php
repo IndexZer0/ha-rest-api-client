@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace IndexZer0\HaRestApiClient;
 
 use Http\Client\Common\Plugin\BaseUriPlugin;
-use Http\Client\Common\Plugin\ErrorPlugin;
+use IndexZer0\HaRestApiClient\Exception\InvalidArgumentException;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Traits\HandlesRequests;
 use SensitiveParameter;
@@ -37,7 +37,6 @@ class HaWebhookClient
                 'replace' => true,
             ]
         ));
-        $this->httpClientBuilder->addPlugin(new ErrorPlugin());
     }
 
     /*
@@ -71,18 +70,18 @@ class HaWebhookClient
         ?array  $data = null,
     ): array {
         if (!in_array($method, $this->supportedHttpMethods, true)) {
-            throw new HaException("\$method must be one of: " . join(', ', $this->supportedHttpMethods));
+            throw new InvalidArgumentException("\$method must be one of: " . join(', ', $this->supportedHttpMethods));
         }
 
         $request = $this->createRequestWithQuery($method, "/webhook/{$webhookId}", $queryParams ?? []);
 
         if ($payloadType !== null) {
             if (!in_array($payloadType, $this->supportedPayloadTypes, true)) {
-                throw new HaException("\$payloadType must be one of: " . join(', ', $this->supportedPayloadTypes));
+                throw new InvalidArgumentException("\$payloadType must be one of: " . join(', ', $this->supportedPayloadTypes));
             }
 
             if ($data === null) {
-                throw new HaException("\$data must be provided when providing \$payloadType");
+                throw new InvalidArgumentException("\$data must be provided when providing \$payloadType");
             }
 
             $request = $request->withHeader('Content-Type', $payloadType === 'json' ? 'application/json' : 'application/x-www-form-urlencoded');

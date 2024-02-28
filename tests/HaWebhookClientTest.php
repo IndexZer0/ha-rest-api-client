@@ -7,7 +7,7 @@ namespace IndexZer0\HaRestApiClient\Tests;
 use Generator;
 use Http\Client\Common\Plugin\BaseUriPlugin;
 use Http\Mock\Client;
-use IndexZer0\HaRestApiClient\HaException;
+use IndexZer0\HaRestApiClient\Exception\HaExceptionInterface;
 use IndexZer0\HaRestApiClient\HaWebhookClient;
 use IndexZer0\HaRestApiClient\HttpClient\Builder;
 use IndexZer0\HaRestApiClient\Tests\ResponseDefinitions\Webhook\WebhookSuccess;
@@ -60,7 +60,7 @@ class HaWebhookClientTest extends TestCase
             if ($expect_error) {
                 $this->fail('Should have failed.');
             }
-        } catch (HaException $haException) {
+        } catch (HaExceptionInterface $haException) {
             if (!$expect_error) {
                 $this->fail('Should not have failed.');
             }
