@@ -48,7 +48,7 @@ jobs:
         run: vendor/bin/phpunit
 
       - name: Code Coverage Upload
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v4.0.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           slug: IndexZer0/ha-rest-api-client
