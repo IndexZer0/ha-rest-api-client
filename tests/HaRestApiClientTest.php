@@ -6,6 +6,7 @@ namespace IndexZer0\HaRestApiClient\Tests;
 
 use DateTime;
 use DateTimeInterface;
+use Exception;
 use Generator;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -934,6 +935,25 @@ class HaRestApiClientTest extends TestCase
 
         // Assert
         $this->assertSame([null], $response);
+    }
+
+    #[Test]
+    public function client_handles_http_client_exceptions(): void
+    {
+        // Arrange
+        $message = 'Http Client Exception';
+        $this->mockClient->addException(new Exception($message));
+
+        $client = $this->createClient($this->defaultBearerToken, $this->defaultBaseUri);
+
+        // Act
+        try {
+            $client->status();
+            $this->fail('Should have failed.');
+        } catch (HaExceptionInterface $haException) {
+            $this->assertSame('Unknown Error.', $haException->getMessage());
+            $this->assertSame($message, $haException->getPrevious()->getMessage());
+        }
     }
 
     /**
