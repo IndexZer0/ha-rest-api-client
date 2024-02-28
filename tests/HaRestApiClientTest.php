@@ -211,11 +211,6 @@ class HaRestApiClientTest extends TestCase
         );
     }
 
-    public function setupHandlerStack(): void
-    {
-
-    }
-
     #[Test]
     public function client_can_get_config(): void
     {
