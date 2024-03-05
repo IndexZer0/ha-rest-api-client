@@ -7,6 +7,18 @@
 
 Clients for accessing HomeAssistant Rest API & Webhooks.
 
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Prerequisites](#prerequisites)
+- [Usage](#usage)
+    - [Basic (Http Client Auto Discovery)](#basic-http-client-auto-discovery)
+    - [Custom Http Client (optional)](#custom-http-client-optional)
+    - [HaRestApiClient - Available Methods](#harestapiclient---available-methods)
+    - [HaWebhookClient - Available Methods](#hawebhookclient---available-methods)
+    - [Error Handling](#error-handling)
+- [Changelog](#changelog)
+- [Contributing](#contributing)
+
 ## Requirements
 
 - PHP Version >= 8.2
