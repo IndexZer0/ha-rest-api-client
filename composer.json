@@ -1,6 +1,6 @@
 {
     "name": "indexzer0/ha-rest-api-client",
-    "description": "Simple client for accessing home assistant rest api.",
+    "description": "Simple client for accessing home assistant rest api and webhooks.",
     "keywords": [
         "IndexZer0",
         "ha-rest-api-client",
